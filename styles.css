@@ -558,6 +558,8 @@ body {
 }
 
 /* Responsive Design */
+
+/* Large tablets and small desktops */
 @media (max-width: 1200px) {
     .stats-container {
         grid-template-columns: repeat(2, 1fr);
@@ -566,22 +568,96 @@ body {
     .main-content {
         grid-template-columns: 1fr;
     }
+
+    .stat-value {
+        font-size: 28px;
+    }
+
+    .stat-value.large {
+        font-size: 26px;
+    }
 }
 
+/* Tablets */
 @media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .dashboard {
+        padding: 10px;
+    }
+
     .header {
         flex-direction: column;
         gap: 15px;
         align-items: center;
     }
 
+    .datetime-container {
+        text-align: center;
+    }
+
+    .greeting h1 {
+        font-size: 20px;
+        padding: 0 10px;
+    }
+
     .stats-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 18px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .stat-value.large {
+        font-size: 22px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+    .stat-change {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+
+    .filter-tabs {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .filter-tab {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .see-all {
+        width: 100%;
+        text-align: center;
+        margin-top: 5px;
     }
 
     .table-header,
     .transaction-row {
-        grid-template-columns: 60px 50px 1fr 100px;
+        grid-template-columns: 65px 45px 1fr 80px;
+        gap: 8px;
+        font-size: 11px;
+    }
+
+    .table-header {
+        font-size: 10px;
     }
 
     .account-cell,
@@ -589,8 +665,387 @@ body {
         display: none;
     }
 
+    .button-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .set-budget-btn,
+    .add-pcf-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     .breakdown-content {
         flex-direction: column;
+        gap: 15px;
+    }
+
+    .breakdown-legend {
+        width: 100%;
+    }
+
+    .legend-item {
+        justify-content: flex-start;
+    }
+
+    /* Chatbot responsive */
+    .chatbot-container {
+        bottom: 15px;
+        right: 15px;
+    }
+
+    .chatbot-toggle {
+        width: 60px;
+        height: 60px;
+    }
+
+    .chatbot-avatar {
+        width: 45px;
+        height: 45px;
+    }
+
+    .chatbot-window {
+        width: 320px;
+        height: 450px;
+        right: -15px;
+        bottom: 75px;
+    }
+
+    /* Modal responsive */
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+        margin: 10px;
+    }
+
+    .modal-header {
+        padding: 20px;
+    }
+
+    .modal-title {
+        font-size: 26px;
+    }
+
+    .modal-body {
+        padding: 25px 20px;
+    }
+
+    .form-input,
+    .form-select {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .form-submit-btn {
+        padding: 15px;
+        font-size: 14px;
+    }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+
+    .dashboard {
+        padding: 8px;
+    }
+
+    .logo {
+        padding: 10px 18px;
+    }
+
+    .logo-icon {
+        font-size: 22px;
+    }
+
+    .logo-julies {
+        font-size: 14px;
+    }
+
+    .logo-bakeshop {
+        font-size: 16px;
+    }
+
+    .datetime-container {
+        padding: 10px 15px;
+    }
+
+    .time {
+        font-size: 20px;
+    }
+
+    .date {
+        font-size: 11px;
+    }
+
+    .greeting {
+        margin-bottom: 20px;
+    }
+
+    .greeting h1 {
+        font-size: 16px;
+        line-height: 1.4;
+    }
+
+    .stats-container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 15px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .stat-label {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 26px;
+        margin-bottom: 0;
+    }
+
+    .stat-change {
+        margin-left: auto;
+    }
+
+    .transactions-section,
+    .breakdown-section,
+    .trend-section {
+        padding: 15px;
+        border-radius: 15px;
+    }
+
+    .section-title {
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+
+    .filter-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 5px;
+    }
+
+    .filter-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .table-header {
+        display: none;
+    }
+
+    .transaction-row {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 12px 0;
+        position: relative;
+    }
+
+    .date-cell {
+        font-size: 11px;
+        color: #999;
+    }
+
+    .cluster-icon {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 32px;
+    }
+
+    .description-cell {
+        font-size: 14px;
+        padding-right: 45px;
+    }
+
+    .amount-cell {
+        font-size: 16px;
+        color: #C41E3A;
+    }
+
+    /* Chatbot mobile */
+    .chatbot-container {
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .chatbot-toggle {
+        width: 55px;
+        height: 55px;
+    }
+
+    .chatbot-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .chatbot-badge {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+
+    .chatbot-window {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        z-index: 2000;
+    }
+
+    .chatbot-header {
+        padding: 15px;
+    }
+
+    .chatbot-header-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .chatbot-name {
+        font-size: 15px;
+    }
+
+    .chatbot-suggestions {
+        padding: 8px 12px;
+    }
+
+    .suggestion-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .chatbot-input-container {
+        padding: 12px;
+    }
+
+    .chatbot-input {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+    .chatbot-send {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Modal fullscreen on mobile */
+    .modal-content {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .modal-header {
+        padding: 18px 15px;
+        border-radius: 0;
+    }
+
+    .modal-title {
+        font-size: 24px;
+    }
+
+    .modal-subtitle {
+        font-size: 11px;
+    }
+
+    .modal-close {
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+
+    .modal-body {
+        padding: 20px 15px;
+        max-height: calc(100vh - 100px);
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .form-input,
+    .form-select {
+        padding: 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        border-radius: 10px;
+    }
+
+    .form-submit-btn {
+        padding: 14px;
+        font-size: 14px;
+        border-radius: 10px;
+    }
+
+    /* Donut chart responsive */
+    .donut-chart-container {
+        display: flex;
+        justify-content: center;
+    }
+
+    #donutChart {
+        width: 150px !important;
+        height: 150px !important;
+    }
+
+    .legend-value {
+        font-size: 13px;
+        min-width: 60px;
+    }
+
+    .legend-label {
+        font-size: 12px;
+    }
+
+    /* Trend chart */
+    .trend-value {
+        font-size: 12px;
+        padding: 5px 10px;
+        right: 20px;
+    }
+
+    #trendChart {
+        height: 60px;
+    }
+
+    .trend-labels {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    /* Data refresh indicator mobile */
+    .data-refresh-indicator {
+        top: 10px;
+        font-size: 11px;
+        padding: 8px 15px;
     }
 }
 
