@@ -251,3 +251,170 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll('.stat-card').forEach(card => {
     observer.observe(card);
 });
+
+// ==================== CHATBOT ====================
+const chatbotToggle = document.getElementById('chatbot-toggle');
+const chatbotWindow = document.getElementById('chatbot-window');
+const chatbotClose = document.getElementById('chatbot-close');
+const chatbotMessages = document.getElementById('chatbot-messages');
+const chatbotInput = document.getElementById('chatbot-input');
+const chatbotSend = document.getElementById('chatbot-send');
+const suggestionBtns = document.querySelectorAll('.suggestion-btn');
+const chatbotBadge = document.querySelector('.chatbot-badge');
+
+// Toggle chatbot window
+chatbotToggle.addEventListener('click', () => {
+    chatbotWindow.classList.toggle('active');
+    if (chatbotWindow.classList.contains('active')) {
+        chatbotBadge.style.display = 'none';
+        chatbotInput.focus();
+    }
+});
+
+chatbotClose.addEventListener('click', () => {
+    chatbotWindow.classList.remove('active');
+});
+
+// Send message function
+function sendMessage(message) {
+    if (!message.trim()) return;
+
+    // Add user message
+    addMessage(message, 'user');
+    chatbotInput.value = '';
+
+    // Show typing indicator
+    showTypingIndicator();
+
+    // Simulate bot response
+    setTimeout(() => {
+        removeTypingIndicator();
+        const response = getBotResponse(message);
+        addMessage(response, 'bot');
+    }, 1000 + Math.random() * 1000);
+}
+
+// Add message to chat
+function addMessage(text, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}`;
+
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+    if (sender === 'bot') {
+        messageDiv.innerHTML = `
+            <img src="julies-logo.png" alt="Julie's" class="message-avatar">
+            <div class="message-content">
+                <p>${text}</p>
+                <span class="message-time">${timeString}</span>
+            </div>
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="message-avatar">J</div>
+            <div class="message-content">
+                <p>${text}</p>
+                <span class="message-time">${timeString}</span>
+            </div>
+        `;
+    }
+
+    chatbotMessages.appendChild(messageDiv);
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+// Show typing indicator
+function showTypingIndicator() {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-message bot typing';
+    typingDiv.innerHTML = `
+        <img src="julies-logo.png" alt="Julie's" class="message-avatar">
+        <div class="message-content">
+            <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+    chatbotMessages.appendChild(typingDiv);
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+// Remove typing indicator
+function removeTypingIndicator() {
+    const typingMessage = chatbotMessages.querySelector('.typing');
+    if (typingMessage) {
+        typingMessage.remove();
+    }
+}
+
+// Bot responses
+function getBotResponse(message) {
+    const lowerMessage = message.toLowerCase();
+
+    if (lowerMessage.includes('balance') || lowerMessage.includes('total')) {
+        return "Your current total balance is <strong>₱75,300</strong>! 🎉 That's an increase of ₱3,200 this month. Great job managing your finances!";
+    }
+
+    if (lowerMessage.includes('transaction') || lowerMessage.includes('recent')) {
+        return "Your recent transactions include:<br>• ₱546 - Bakery Supplies (Jan 20)<br>• ₱544 - Perishable Ingredients (Jan 18)<br>• ₱4,586 - Consumable Items (Jan 18)<br><br>Would you like more details?";
+    }
+
+    if (lowerMessage.includes('budget') || lowerMessage.includes('help')) {
+        return "I can help with budget planning! 📊 Based on your spending:<br>• Food & Dining: ₱12,000<br>• Shopping: ₱6,500<br>• Transport: ₱4,000<br><br>Would you like tips to optimize your budget?";
+    }
+
+    if (lowerMessage.includes('week')) {
+        return "This week you've spent <strong>₱3,550</strong>, which is ₱550 more than last week. Your main expenses were in bakery supplies.";
+    }
+
+    if (lowerMessage.includes('month')) {
+        return "This month's total is <strong>₱28,500</strong>. That's ₱3,000 less than last month - you're doing great at saving! 👏";
+    }
+
+    if (lowerMessage.includes('year')) {
+        return "Your yearly total is <strong>₱218,000</strong> with a positive change of ₱25,200! Your bakeshop is doing well! 🥐";
+    }
+
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+        return "Hello Jeanvie! 👋 How can I assist you with Julie's Bakeshop finances today?";
+    }
+
+    if (lowerMessage.includes('thank')) {
+        return "You're welcome! 😊 Feel free to ask if you need anything else. I'm always here to help with your bakeshop finances!";
+    }
+
+    if (lowerMessage.includes('pcf') || lowerMessage.includes('petty cash')) {
+        return "To add a new PCF (Petty Cash Fund) entry, click the <strong>Add PCF</strong> button on the dashboard. I can guide you through the process if needed!";
+    }
+
+    // Default response
+    const defaultResponses = [
+        "I'm here to help with your Julie's Bakeshop finances! You can ask about your balance, transactions, budget, or any financial questions. 🥐",
+        "I can help you with balance inquiries, transaction history, budget planning, and more! What would you like to know?",
+        "Feel free to ask about your weekly, monthly, or yearly finances. I'm your friendly bakeshop assistant! 😊"
+    ];
+
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+}
+
+// Event listeners
+chatbotSend.addEventListener('click', () => {
+    sendMessage(chatbotInput.value);
+});
+
+chatbotInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        sendMessage(chatbotInput.value);
+    }
+});
+
+// Suggestion buttons
+suggestionBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const message = btn.dataset.message;
+        sendMessage(message);
+    });
+});

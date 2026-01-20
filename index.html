@@ -216,6 +216,46 @@
         </div>
     </div>
 
+    <!-- Chatbot -->
+    <div class="chatbot-container" id="chatbot">
+        <div class="chatbot-toggle" id="chatbot-toggle">
+            <img src="julies-logo.png" alt="Julie's Assistant" class="chatbot-avatar">
+            <span class="chatbot-badge">1</span>
+        </div>
+        <div class="chatbot-window" id="chatbot-window">
+            <div class="chatbot-header">
+                <img src="julies-logo.png" alt="Julie's" class="chatbot-header-avatar">
+                <div class="chatbot-header-info">
+                    <span class="chatbot-name">Julie's Assistant</span>
+                    <span class="chatbot-status">Online</span>
+                </div>
+                <button class="chatbot-close" id="chatbot-close">&times;</button>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages">
+                <div class="chat-message bot">
+                    <img src="julies-logo.png" alt="Julie's" class="message-avatar">
+                    <div class="message-content">
+                        <p>Hi Jeanvie! 👋 Welcome to Julie's Bakeshop! How can I help you today?</p>
+                        <span class="message-time">Just now</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chatbot-suggestions">
+                <button class="suggestion-btn" data-message="Check my balance">💰 Check Balance</button>
+                <button class="suggestion-btn" data-message="Show recent transactions">📋 Transactions</button>
+                <button class="suggestion-btn" data-message="Help with budget">📊 Budget Help</button>
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" class="chatbot-input" id="chatbot-input" placeholder="Type your message...">
+                <button class="chatbot-send" id="chatbot-send">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
