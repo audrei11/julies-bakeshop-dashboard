@@ -418,3 +418,67 @@ suggestionBtns.forEach(btn => {
         sendMessage(message);
     });
 });
+
+// ==================== PCF MODAL ====================
+const addPcfBtn = document.getElementById('add-pcf-btn');
+const pcfModal = document.getElementById('pcf-modal');
+const pcfModalClose = document.getElementById('pcf-modal-close');
+const pcfForm = document.getElementById('pcf-form');
+
+// Open modal
+addPcfBtn.addEventListener('click', () => {
+    pcfModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+});
+
+// Close modal
+pcfModalClose.addEventListener('click', () => {
+    pcfModal.classList.remove('active');
+    document.body.style.overflow = '';
+});
+
+// Close modal when clicking outside
+pcfModal.addEventListener('click', (e) => {
+    if (e.target === pcfModal) {
+        pcfModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && pcfModal.classList.contains('active')) {
+        pcfModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Handle form submission
+pcfForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Collect form data
+    const formData = {
+        date: document.getElementById('pcf-date').value,
+        cluster: document.getElementById('pcf-cluster').value,
+        expenseDesc: document.getElementById('pcf-expense-desc').value,
+        costCenter: document.getElementById('pcf-cost-center').value,
+        vendor: document.getElementById('pcf-vendor').value,
+        tin: document.getElementById('pcf-tin').value,
+        orSi: document.getElementById('pcf-or-si').value,
+        amountWithVat: document.getElementById('pcf-amount-vat').value,
+        exvat: document.getElementById('pcf-exvat').value,
+        accountName: document.getElementById('pcf-account-name').value,
+        vat: document.getElementById('pcf-vat').value
+    };
+
+    console.log('PCF Form Submitted:', formData);
+
+    // Show success message
+    alert('PCF Entry submitted successfully!');
+
+    // Reset form and close modal
+    pcfForm.reset();
+    pcfModal.classList.remove('active');
+    document.body.style.overflow = '';
+});

@@ -158,7 +158,7 @@
                         <span class="budget-icon">📁</span>
                         Set Budget
                     </button>
-                    <button class="add-pcf-btn">
+                    <button class="add-pcf-btn" id="add-pcf-btn">
                         <span class="pcf-icon">➕</span>
                         Add PCF
                     </button>
@@ -212,6 +212,88 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PCF Modal -->
+    <div class="modal-overlay" id="pcf-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">PCF</h2>
+                <p class="modal-subtitle">PCF DAILY BLUMENTRITT</p>
+                <button class="modal-close" id="pcf-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="pcf-form">
+                    <div class="form-group">
+                        <label class="form-label">date</label>
+                        <input type="date" class="form-input" id="pcf-date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Cluster</label>
+                        <input type="text" class="form-input" id="pcf-cluster" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Expense Description</label>
+                        <input type="text" class="form-input" id="pcf-expense-desc" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Cost center</label>
+                        <select class="form-select" id="pcf-cost-center">
+                            <option value="">Select an option ...</option>
+                            <option value="operations">Operations</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="admin">Administration</option>
+                            <option value="production">Production</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Vendor</label>
+                        <input type="text" class="form-input" id="pcf-vendor" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tin#</label>
+                        <input type="text" class="form-input" id="pcf-tin" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">OR/ si#</label>
+                        <input type="text" class="form-input" id="pcf-or-si" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">AMOUNT WITH VAT</label>
+                        <input type="number" step="0.01" class="form-input" id="pcf-amount-vat" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">EXvat</label>
+                        <input type="number" step="0.01" class="form-input" id="pcf-exvat" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Account name</label>
+                        <select class="form-select" id="pcf-account-name">
+                            <option value="bakery-supplies">Bakery Supplies - Consumable Items / 6511000101</option>
+                            <option value="perishable">COS - Perishable Ingredients / 6512000101</option>
+                            <option value="packaging">Packaging Materials / 6513000101</option>
+                            <option value="utilities">Utilities / 6514000101</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">VAT</label>
+                        <input type="number" step="0.01" class="form-input" id="pcf-vat" placeholder="">
+                    </div>
+
+                    <button type="submit" class="form-submit-btn">Submit</button>
+                </form>
             </div>
         </div>
     </div>
