@@ -338,6 +338,73 @@ body {
     color: #5C3317;
 }
 
+/* Loading States */
+.loading-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #8B7355;
+    font-size: 14px;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #FFE566;
+    border-top-color: #C41E3A;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.data-refresh-indicator {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #C41E3A 0%, #8B0000 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(196, 30, 58, 0.3);
+    z-index: 3000;
+    display: none;
+}
+
+.data-refresh-indicator.show {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.error-message {
+    text-align: center;
+    padding: 20px;
+    color: #C41E3A;
+    background: #FFEBEE;
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
 .button-group {
     display: flex;
     gap: 12px;

@@ -10,6 +10,12 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Data Refresh Indicator -->
+    <div class="data-refresh-indicator" id="refresh-indicator">
+        <span class="loading-spinner"></span>
+        <span>Syncing data...</span>
+    </div>
+
     <div class="dashboard">
         <!-- Header -->
         <header class="header">
@@ -38,40 +44,40 @@
         <div class="stats-container">
             <div class="stat-card">
                 <div class="stat-label">Total Balance</div>
-                <div class="stat-value">₱75,300</div>
-                <div class="stat-change positive">
+                <div class="stat-value" id="total-balance">₱0</div>
+                <div class="stat-change positive" id="balance-change">
                     <span class="change-icon">✦</span>
-                    <span>+3,200 this month</span>
+                    <span>Loading...</span>
                 </div>
                 <div class="card-diamond top-left"></div>
                 <div class="card-diamond bottom-right"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">This Week</div>
-                <div class="stat-value">₱3,550</div>
-                <div class="stat-change positive">
+                <div class="stat-value" id="this-week">₱0</div>
+                <div class="stat-change positive" id="week-change">
                     <span class="change-icon">✦</span>
-                    <span>+550</span>
+                    <span>Loading...</span>
                 </div>
                 <div class="card-diamond top-left"></div>
                 <div class="card-diamond bottom-right"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">This Month</div>
-                <div class="stat-value">₱28,500</div>
-                <div class="stat-change negative">
-                    <span class="change-icon">↓</span>
-                    <span>-3,000</span>
+                <div class="stat-value" id="this-month">₱0</div>
+                <div class="stat-change positive" id="month-change">
+                    <span class="change-icon">✦</span>
+                    <span>Loading...</span>
                 </div>
                 <div class="card-diamond top-left"></div>
                 <div class="card-diamond bottom-right"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">This Year</div>
-                <div class="stat-value large">₱218,000</div>
-                <div class="stat-change positive">
+                <div class="stat-value large" id="this-year">₱0</div>
+                <div class="stat-change positive" id="year-change">
                     <span class="change-icon">✦</span>
-                    <span>+25,200</span>
+                    <span>Loading...</span>
                 </div>
                 <div class="card-diamond top-left"></div>
                 <div class="card-diamond bottom-right"></div>
@@ -98,59 +104,9 @@
                         <span>Submitted</span>
                         <span>Amount</span>
                     </div>
-                    <div class="transaction-row">
-                        <span class="date-cell">Jan 20<br>2028</span>
-                        <span class="cluster-cell">
-                            <div class="cluster-icon yellow">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="3" y="3" width="7" height="7" rx="1"/>
-                                    <rect x="14" y="3" width="7" height="7" rx="1"/>
-                                    <rect x="3" y="14" width="7" height="7" rx="1"/>
-                                    <rect x="14" y="14" width="7" height="7" rx="1"/>
-                                </svg>
-                            </div>
-                        </span>
-                        <span class="description-cell">
-                            <strong>dasd</strong><br>
-                            <small>asd</small>
-                        </span>
-                        <span class="account-cell">Bakery Supplies - Consumable Items / Jb:32338</span>
-                        <span class="submitted-cell">Jan 18, 2028, 3:30 AM sda</span>
-                        <span class="amount-cell">₱546</span>
-                    </div>
-                    <div class="transaction-row">
-                        <span class="date-cell">Jan 18<br>2028</span>
-                        <span class="cluster-cell">
-                            <div class="cluster-icon blue">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                </svg>
-                            </div>
-                        </span>
-                        <span class="description-cell">
-                            <strong>Blumentrit</strong><br>
-                            <small>egg</small>
-                        </span>
-                        <span class="account-cell">COS - Perishable Ingredients / Jbs:287.3 walter</span>
-                        <span class="submitted-cell">Jan 18, 2028, 7:25 AM walter</span>
-                        <span class="amount-cell">₱544</span>
-                    </div>
-                    <div class="transaction-row">
-                        <span class="date-cell">Jan 18<br>2028</span>
-                        <span class="cluster-cell">
-                            <div class="cluster-icon red">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                </svg>
-                            </div>
-                        </span>
-                        <span class="description-cell">
-                            <strong>blum</strong><br>
-                            <small>pen</small>
-                        </span>
-                        <span class="account-cell">Bakery Supplies - Consumable Items / A132246</span>
-                        <span class="submitted-cell">Jan 18, 2028, 7:29 AM ab</span>
-                        <span class="amount-cell">₱4,586</span>
+                    <div id="transactions-container">
+                        <!-- Transactions will be loaded dynamically from Google Sheets -->
+                        <div class="loading-message">Loading transactions...</div>
                     </div>
                 </div>
                 <div class="button-group">

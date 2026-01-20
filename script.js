@@ -1,3 +1,323 @@
+// ==================== GOOGLE SHEETS INTEGRATION ====================
+// Google Sheets Configuration
+const SHEET_ID = '1Iw76w4c0Jp8xwSj1UgukZlkFRGOclkvJk9TeaZzuiw0';
+const SHEET_NAME = 'Sheet1'; // Change if your sheet has a different name
+const API_KEY = ''; // Optional: Add your Google API key for higher limits
+
+// Construct the Google Sheets URL (using CSV export for public sheets)
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+// Data refresh interval (30 seconds)
+const REFRESH_INTERVAL = 30000;
+
+// Store fetched data globally
+let sheetData = [];
+let lastFetchTime = null;
+
+// Fetch data from Google Sheets
+async function fetchSheetData() {
+    const refreshIndicator = document.getElementById('refresh-indicator');
+
+    try {
+        // Show refresh indicator
+        if (lastFetchTime) {
+            refreshIndicator.classList.add('show');
+        }
+
+        const response = await fetch(SHEET_URL);
+        const text = await response.text();
+
+        // Parse the JSONP response
+        const jsonString = text.substring(47, text.length - 2);
+        const data = JSON.parse(jsonString);
+
+        // Extract rows from the response
+        const rows = data.table.rows;
+        const cols = data.table.cols;
+
+        // Get column headers
+        const headers = cols.map(col => col.label || '');
+
+        // Parse data rows
+        sheetData = rows.map(row => {
+            const rowData = {};
+            row.c.forEach((cell, index) => {
+                const header = headers[index] || `col${index}`;
+                rowData[header] = cell ? (cell.v !== null ? cell.v : '') : '';
+                // Also store formatted value if available
+                if (cell && cell.f) {
+                    rowData[header + '_formatted'] = cell.f;
+                }
+            });
+            return rowData;
+        });
+
+        console.log('Fetched data:', sheetData);
+
+        // Update the dashboard with new data
+        updateDashboard(sheetData);
+
+        lastFetchTime = new Date();
+
+        // Hide refresh indicator
+        setTimeout(() => {
+            refreshIndicator.classList.remove('show');
+        }, 1000);
+
+    } catch (error) {
+        console.error('Error fetching sheet data:', error);
+        refreshIndicator.classList.remove('show');
+
+        // Show error in transactions container
+        const container = document.getElementById('transactions-container');
+        if (container && !sheetData.length) {
+            container.innerHTML = `
+                <div class="error-message">
+                    <p>Unable to load data from Google Sheets.</p>
+                    <p style="font-size: 12px; margin-top: 10px;">Make sure the sheet is publicly accessible (Share > Anyone with the link can view)</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Update dashboard with sheet data
+function updateDashboard(data) {
+    if (!data || data.length === 0) {
+        document.getElementById('transactions-container').innerHTML =
+            '<div class="loading-message">No transactions found</div>';
+        return;
+    }
+
+    // Calculate statistics from the data
+    const stats = calculateStats(data);
+
+    // Update stat cards
+    updateStatCards(stats);
+
+    // Update transactions table
+    updateTransactionsTable(data);
+
+    // Update breakdown chart
+    updateBreakdownChart(data);
+}
+
+// Calculate statistics from data
+function calculateStats(data) {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    let totalBalance = 0;
+    let thisWeek = 0;
+    let thisMonth = 0;
+    let thisYear = 0;
+
+    data.forEach(row => {
+        // Try to get amount from various possible column names
+        const amount = parseFloat(
+            row['AMOUNT WITH VAT'] ||
+            row['Amount'] ||
+            row['amount'] ||
+            row['AMOUNT'] ||
+            row['Amount with VAT'] ||
+            0
+        ) || 0;
+
+        // Try to get date from various possible column names
+        const dateStr = row['date'] || row['Date'] || row['DATE'] || '';
+        let rowDate;
+
+        if (dateStr) {
+            // Handle different date formats
+            if (typeof dateStr === 'number') {
+                // Excel serial date
+                rowDate = new Date((dateStr - 25569) * 86400 * 1000);
+            } else {
+                rowDate = new Date(dateStr);
+            }
+        } else {
+            rowDate = new Date(); // Default to today if no date
+        }
+
+        // Add to totals
+        totalBalance += amount;
+
+        if (rowDate >= startOfWeek) {
+            thisWeek += amount;
+        }
+        if (rowDate >= startOfMonth) {
+            thisMonth += amount;
+        }
+        if (rowDate >= startOfYear) {
+            thisYear += amount;
+        }
+    });
+
+    return {
+        totalBalance,
+        thisWeek,
+        thisMonth,
+        thisYear,
+        transactionCount: data.length
+    };
+}
+
+// Update stat cards with calculated values
+function updateStatCards(stats) {
+    // Format currency
+    const formatCurrency = (num) => '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+    document.getElementById('total-balance').textContent = formatCurrency(stats.totalBalance);
+    document.getElementById('this-week').textContent = formatCurrency(stats.thisWeek);
+    document.getElementById('this-month').textContent = formatCurrency(stats.thisMonth);
+    document.getElementById('this-year').textContent = formatCurrency(stats.thisYear);
+
+    // Update change indicators
+    document.getElementById('balance-change').innerHTML = `
+        <span class="change-icon">✦</span>
+        <span>${stats.transactionCount} transactions</span>
+    `;
+    document.getElementById('week-change').innerHTML = `
+        <span class="change-icon">✦</span>
+        <span>this week</span>
+    `;
+    document.getElementById('month-change').innerHTML = `
+        <span class="change-icon">✦</span>
+        <span>this month</span>
+    `;
+    document.getElementById('year-change').innerHTML = `
+        <span class="change-icon">✦</span>
+        <span>year to date</span>
+    `;
+}
+
+// Update transactions table
+function updateTransactionsTable(data) {
+    const container = document.getElementById('transactions-container');
+
+    // Get the most recent 10 transactions
+    const recentTransactions = data.slice(-10).reverse();
+
+    if (recentTransactions.length === 0) {
+        container.innerHTML = '<div class="loading-message">No transactions to display</div>';
+        return;
+    }
+
+    const clusterIcons = ['yellow', 'blue', 'red'];
+
+    const transactionsHTML = recentTransactions.map((row, index) => {
+        // Get values from various possible column names
+        const date = row['date'] || row['Date'] || row['DATE'] || '';
+        const cluster = row['Cluster'] || row['cluster'] || row['CLUSTER'] || '';
+        const expenseDesc = row['Expense Description'] || row['expense description'] || row['Description'] || '';
+        const accountName = row['Account name'] || row['Account Name'] || row['account name'] || '';
+        const vendor = row['Vendor'] || row['vendor'] || '';
+        const amount = row['AMOUNT WITH VAT'] || row['Amount'] || row['amount'] || 0;
+
+        // Format date
+        let formattedDate = '';
+        if (date) {
+            let dateObj;
+            if (typeof date === 'number') {
+                dateObj = new Date((date - 25569) * 86400 * 1000);
+            } else {
+                dateObj = new Date(date);
+            }
+            const month = dateObj.toLocaleString('en-US', { month: 'short' });
+            const day = dateObj.getDate();
+            const year = dateObj.getFullYear();
+            formattedDate = `${month} ${day}<br>${year}`;
+        }
+
+        // Format amount
+        const formattedAmount = '₱' + parseFloat(amount || 0).toLocaleString('en-PH');
+
+        // Cycle through cluster icon colors
+        const iconColor = clusterIcons[index % 3];
+
+        return `
+            <div class="transaction-row">
+                <span class="date-cell">${formattedDate}</span>
+                <span class="cluster-cell">
+                    <div class="cluster-icon ${iconColor}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                    </div>
+                </span>
+                <span class="description-cell">
+                    <strong>${cluster || 'N/A'}</strong><br>
+                    <small>${expenseDesc || ''}</small>
+                </span>
+                <span class="account-cell">${accountName || 'N/A'}</span>
+                <span class="submitted-cell">${vendor || ''}</span>
+                <span class="amount-cell">${formattedAmount}</span>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = transactionsHTML;
+}
+
+// Update breakdown chart with categorized data
+function updateBreakdownChart(data) {
+    // Categorize by account name
+    const categories = {};
+
+    data.forEach(row => {
+        const accountName = row['Account name'] || row['Account Name'] || 'Other';
+        const amount = parseFloat(row['AMOUNT WITH VAT'] || row['Amount'] || 0) || 0;
+
+        // Simplify category name
+        let category = 'Other';
+        const accountLower = accountName.toLowerCase();
+
+        if (accountLower.includes('bakery') || accountLower.includes('consumable')) {
+            category = 'Bakery Supplies';
+        } else if (accountLower.includes('perishable') || accountLower.includes('ingredient')) {
+            category = 'Ingredients';
+        } else if (accountLower.includes('packaging')) {
+            category = 'Packaging';
+        } else if (accountLower.includes('utilities')) {
+            category = 'Utilities';
+        }
+
+        categories[category] = (categories[category] || 0) + amount;
+    });
+
+    // Update legend (we'll keep the donut chart as is for now, just update values)
+    const legendContainer = document.querySelector('.breakdown-legend');
+    if (legendContainer && Object.keys(categories).length > 0) {
+        const colors = ['#F5A623', '#E8721C', '#D0021B', '#8B0000'];
+        const sortedCategories = Object.entries(categories).sort((a, b) => b[1] - a[1]).slice(0, 4);
+
+        legendContainer.innerHTML = sortedCategories.map(([name, amount], index) => `
+            <div class="legend-item">
+                <span class="legend-color" style="background: ${colors[index]}"></span>
+                <span class="legend-value">₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 0 })}</span>
+                <span class="legend-label">${name}</span>
+            </div>
+        `).join('');
+    }
+}
+
+// Initialize data fetching
+function initDataFetch() {
+    // Initial fetch
+    fetchSheetData();
+
+    // Set up periodic refresh
+    setInterval(fetchSheetData, REFRESH_INTERVAL);
+}
+
 // Update time and date
 function updateDateTime() {
     const now = new Date();
@@ -22,6 +342,9 @@ function updateDateTime() {
 // Update every second
 setInterval(updateDateTime, 1000);
 updateDateTime();
+
+// Initialize data fetch on page load
+initDataFetch();
 
 // Draw Donut Chart
 function drawDonutChart() {
