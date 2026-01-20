@@ -338,11 +338,16 @@ body {
     color: #5C3317;
 }
 
-.set-budget-btn {
+.button-group {
+    display: flex;
+    gap: 12px;
+}
+
+.set-budget-btn,
+.add-pcf-btn {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #C41E3A;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -354,13 +359,28 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
+.set-budget-btn {
+    background: #C41E3A;
+}
+
+.add-pcf-btn {
+    background: #F5A623;
+}
+
 .set-budget-btn:hover {
     background: #A01830;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(196, 30, 58, 0.3);
 }
 
-.budget-icon {
+.add-pcf-btn:hover {
+    background: #D4891A;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(245, 166, 35, 0.3);
+}
+
+.budget-icon,
+.pcf-icon {
     font-size: 16px;
 }
 
