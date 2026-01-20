@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julie's Bakeshop - Financial Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo">
+                    <span class="logo-icon">🥐</span>
+                    <div class="logo-text">
+                        <span class="logo-julies">JULIE'S</span>
+                        <span class="logo-bakeshop">BAKESHOP</span>
+                    </div>
+                </div>
+                <span class="sparkle">✦</span>
+            </div>
+            <div class="datetime-container">
+                <div class="time" id="current-time">10:55:29 AM</div>
+                <div class="date" id="current-date">Sunday, January 18, 2026</div>
+            </div>
+        </header>
+
+        <!-- Greeting -->
+        <div class="greeting">
+            <h1><span class="greeting-name">Hello, Anna!</span> Here are your financial details.</h1>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-label">Total Balance</div>
+                <div class="stat-value">₱75,300</div>
+                <div class="stat-change positive">
+                    <span class="change-icon">✦</span>
+                    <span>+3,200 this month</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Week</div>
+                <div class="stat-value">₱3,550</div>
+                <div class="stat-change positive">
+                    <span class="change-icon">✦</span>
+                    <span>+550</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Month</div>
+                <div class="stat-value">₱28,500</div>
+                <div class="stat-change negative">
+                    <span class="change-icon">↓</span>
+                    <span>-3,000</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Year</div>
+                <div class="stat-value large">₱218,000</div>
+                <div class="stat-change positive">
+                    <span class="change-icon">✦</span>
+                    <span>+25,200</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Recent Transactions -->
+            <div class="transactions-section">
+                <h2 class="section-title">Recent Transactions</h2>
+                <div class="filter-tabs">
+                    <button class="filter-tab active">All</button>
+                    <button class="filter-tab">Food & Dining</button>
+                    <button class="filter-tab">Shopping</button>
+                    <a href="#" class="see-all">Spa ALL ></a>
+                </div>
+                <div class="transactions-table">
+                    <div class="table-header">
+                        <span>Date</span>
+                        <span>Cluster</span>
+                        <span>Expense Description</span>
+                        <span>Account Name</span>
+                        <span>Submitted</span>
+                        <span>Amount</span>
+                    </div>
+                    <div class="transaction-row">
+                        <span class="date-cell">Jan 20<br>2028</span>
+                        <span class="cluster-cell">
+                            <div class="cluster-icon yellow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                                </svg>
+                            </div>
+                        </span>
+                        <span class="description-cell">
+                            <strong>dasd</strong><br>
+                            <small>asd</small>
+                        </span>
+                        <span class="account-cell">Bakery Supplies - Consumable Items / Jb:32338</span>
+                        <span class="submitted-cell">Jan 18, 2028, 3:30 AM sda</span>
+                        <span class="amount-cell">₱546</span>
+                    </div>
+                    <div class="transaction-row">
+                        <span class="date-cell">Jan 18<br>2028</span>
+                        <span class="cluster-cell">
+                            <div class="cluster-icon blue">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                </svg>
+                            </div>
+                        </span>
+                        <span class="description-cell">
+                            <strong>Blumentrit</strong><br>
+                            <small>egg</small>
+                        </span>
+                        <span class="account-cell">COS - Perishable Ingredients / Jbs:287.3 walter</span>
+                        <span class="submitted-cell">Jan 18, 2028, 7:25 AM walter</span>
+                        <span class="amount-cell">₱544</span>
+                    </div>
+                    <div class="transaction-row">
+                        <span class="date-cell">Jan 18<br>2028</span>
+                        <span class="cluster-cell">
+                            <div class="cluster-icon red">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </div>
+                        </span>
+                        <span class="description-cell">
+                            <strong>blum</strong><br>
+                            <small>pen</small>
+                        </span>
+                        <span class="account-cell">Bakery Supplies - Consumable Items / A132246</span>
+                        <span class="submitted-cell">Jan 18, 2028, 7:29 AM ab</span>
+                        <span class="amount-cell">₱4,586</span>
+                    </div>
+                </div>
+                <button class="set-budget-btn">
+                    <span class="budget-icon">📁</span>
+                    Set Budget
+                </button>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="right-panel">
+                <!-- Breakdown Chart -->
+                <div class="breakdown-section">
+                    <h2 class="section-title">Breakdown</h2>
+                    <div class="breakdown-content">
+                        <div class="donut-chart-container">
+                            <canvas id="donutChart" width="180" height="180"></canvas>
+                        </div>
+                        <div class="breakdown-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #F5A623;"></span>
+                                <span class="legend-value">₱12,000</span>
+                                <span class="legend-label">Food & Dining</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #E8721C;"></span>
+                                <span class="legend-value">₱6,500</span>
+                                <span class="legend-label">Shopping</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #D0021B;"></span>
+                                <span class="legend-value">₱4,000</span>
+                                <span class="legend-label">Transport</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #8B0000;"></span>
+                                <span class="legend-value">₱3,000</span>
+                                <span class="legend-label">Bills & Utilities</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spending Trend -->
+                <div class="trend-section">
+                    <h2 class="section-title">Spending Trend</h2>
+                    <div class="trend-chart">
+                        <div class="trend-value">₱23,500</div>
+                        <canvas id="trendChart" width="300" height="80"></canvas>
+                        <div class="trend-labels">
+                            <span>Mar</span>
+                            <span>Apri</span>
+                            <span>May</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
