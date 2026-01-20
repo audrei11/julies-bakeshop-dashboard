@@ -5,7 +5,8 @@ const SHEET_NAME = 'Sheet1'; // Change if your sheet has a different name
 const API_KEY = ''; // Optional: Add your Google API key for higher limits
 
 // Construct the Google Sheets URL (using CSV export for public sheets)
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+// Note: We'll add a cache-buster parameter when fetching
+const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
 
 // Data refresh interval (30 seconds)
 const REFRESH_INTERVAL = 30000;
@@ -24,6 +25,10 @@ async function fetchSheetData() {
             refreshIndicator.classList.add('show');
         }
 
+        // Add cache-busting parameter to force fresh data
+        const cacheBuster = new Date().getTime();
+        const SHEET_URL = `${SHEET_BASE_URL}&_cb=${cacheBuster}`;
+
         const response = await fetch(SHEET_URL);
         const text = await response.text();
 
@@ -37,6 +42,7 @@ async function fetchSheetData() {
 
         // Get column headers
         const headers = cols.map(col => col.label || '');
+        console.log('Column headers from sheet:', headers);
 
         // Parse data rows
         sheetData = rows.map(row => {
@@ -53,6 +59,7 @@ async function fetchSheetData() {
         });
 
         console.log('Fetched data:', sheetData);
+        console.log('Total rows fetched:', sheetData.length);
 
         // Update the dashboard with new data
         updateDashboard(sheetData);
