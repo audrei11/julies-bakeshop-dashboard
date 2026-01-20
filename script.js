@@ -40,9 +40,13 @@ async function fetchSheetData() {
         const rows = data.table.rows;
         const cols = data.table.cols;
 
-        // Get column headers
-        const headers = cols.map(col => col.label || '');
+        // Get column headers - also try 'id' field if label is empty
+        const headers = cols.map((col, idx) => {
+            // Try label first, then id, then generate a default
+            return col.label || col.id || `col${idx}`;
+        });
         console.log('Column headers from sheet:', headers);
+        console.log('Raw column data:', cols);
 
         // Parse data rows
         sheetData = rows.map(row => {
@@ -126,17 +130,24 @@ function calculateStats(data) {
 
     data.forEach(row => {
         // Try to get amount from various possible column names
+        // Also check for column letters (A, B, C, etc.) if labels are missing
         const amount = parseFloat(
             row['AMOUNT WITH VAT'] ||
             row['Amount'] ||
             row['amount'] ||
             row['AMOUNT'] ||
             row['Amount with VAT'] ||
+            row['AMOUNT WITH vat'] ||
+            row['amount with vat'] ||
+            row['H'] || // Column H might be amount
+            row['I'] || // Column I might be amount
+            row['col7'] || // 8th column (0-indexed)
+            row['col8'] || // 9th column
             0
         ) || 0;
 
         // Try to get date from various possible column names
-        const dateStr = row['date'] || row['Date'] || row['DATE'] || '';
+        const dateStr = row['date'] || row['Date'] || row['DATE'] || row['A'] || row['col0'] || '';
         let rowDate;
 
         if (dateStr) {
@@ -218,13 +229,19 @@ function updateTransactionsTable(data) {
     const clusterIcons = ['yellow', 'blue', 'red'];
 
     const transactionsHTML = recentTransactions.map((row, index) => {
-        // Get values from various possible column names
-        const date = row['date'] || row['Date'] || row['DATE'] || '';
-        const cluster = row['Cluster'] || row['cluster'] || row['CLUSTER'] || '';
-        const expenseDesc = row['Expense Description'] || row['expense description'] || row['Description'] || '';
-        const accountName = row['Account name'] || row['Account Name'] || row['account name'] || '';
-        const vendor = row['Vendor'] || row['vendor'] || '';
-        const amount = row['AMOUNT WITH VAT'] || row['Amount'] || row['amount'] || 0;
+        // Log first row to see actual keys
+        if (index === 0) {
+            console.log('Row keys:', Object.keys(row));
+            console.log('First row data:', row);
+        }
+
+        // Get values from various possible column names (including column letters)
+        const date = row['date'] || row['Date'] || row['DATE'] || row['A'] || row['col0'] || '';
+        const cluster = row['Cluster'] || row['cluster'] || row['CLUSTER'] || row['B'] || row['col1'] || '';
+        const expenseDesc = row['Expense Description'] || row['expense description'] || row['Description'] || row['C'] || row['col2'] || '';
+        const accountName = row['Account name'] || row['Account Name'] || row['account name'] || row['J'] || row['col9'] || '';
+        const vendor = row['Vendor'] || row['vendor'] || row['E'] || row['col4'] || '';
+        const amount = row['AMOUNT WITH VAT'] || row['Amount'] || row['amount'] || row['AMOUNT'] || row['H'] || row['col7'] || 0;
 
         // Format date
         let formattedDate = '';
