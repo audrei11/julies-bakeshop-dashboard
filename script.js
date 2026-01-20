@@ -130,24 +130,21 @@ function calculateStats(data) {
 
     data.forEach(row => {
         // Try to get amount from various possible column names
-        // Also check for column letters (A, B, C, etc.) if labels are missing
+        // Your sheet uses "AMT W/ VAt" as the column name
         const amount = parseFloat(
+            row['AMT W/ VAt'] ||
+            row['AMT W/ VAT'] ||
+            row['AMT W/ Vat'] ||
             row['AMOUNT WITH VAT'] ||
             row['Amount'] ||
             row['amount'] ||
             row['AMOUNT'] ||
             row['Amount with VAT'] ||
-            row['AMOUNT WITH vat'] ||
-            row['amount with vat'] ||
-            row['H'] || // Column H might be amount
-            row['I'] || // Column I might be amount
-            row['col7'] || // 8th column (0-indexed)
-            row['col8'] || // 9th column
             0
         ) || 0;
 
         // Try to get date from various possible column names
-        const dateStr = row['date'] || row['Date'] || row['DATE'] || row['A'] || row['col0'] || '';
+        const dateStr = row['Date'] || row['date'] || row['DATE'] || '';
         let rowDate;
 
         if (dateStr) {
@@ -235,13 +232,13 @@ function updateTransactionsTable(data) {
             console.log('First row data:', row);
         }
 
-        // Get values from various possible column names (including column letters)
-        const date = row['date'] || row['Date'] || row['DATE'] || row['A'] || row['col0'] || '';
-        const cluster = row['Cluster'] || row['cluster'] || row['CLUSTER'] || row['B'] || row['col1'] || '';
-        const expenseDesc = row['Expense Description'] || row['expense description'] || row['Description'] || row['C'] || row['col2'] || '';
-        const accountName = row['Account name'] || row['Account Name'] || row['account name'] || row['J'] || row['col9'] || '';
-        const vendor = row['Vendor'] || row['vendor'] || row['E'] || row['col4'] || '';
-        const amount = row['AMOUNT WITH VAT'] || row['Amount'] || row['amount'] || row['AMOUNT'] || row['H'] || row['col7'] || 0;
+        // Get values matching your Google Sheet column names
+        const date = row['Date'] || row['date'] || row['DATE'] || '';
+        const cluster = row['Cluster'] || row['cluster'] || '';
+        const expenseDesc = row['Expense description'] || row['Expense Description'] || row['expense description'] || '';
+        const accountName = row['Account Name'] || row['Account name'] || row['account name'] || '';
+        const vendor = row['vendor name'] || row['Vendor'] || row['vendor'] || row['Submitted'] || '';
+        const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['AMOUNT WITH VAT'] || row['Amount'] || 0;
 
         // Format date
         let formattedDate = '';
@@ -291,14 +288,17 @@ function updateTransactionsTable(data) {
     container.innerHTML = transactionsHTML;
 }
 
+// Store categories globally for donut chart
+let chartCategories = [];
+
 // Update breakdown chart with categorized data
 function updateBreakdownChart(data) {
     // Categorize by account name
     const categories = {};
 
     data.forEach(row => {
-        const accountName = row['Account name'] || row['Account Name'] || 'Other';
-        const amount = parseFloat(row['AMOUNT WITH VAT'] || row['Amount'] || 0) || 0;
+        const accountName = row['Account Name'] || row['Account name'] || 'Other';
+        const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0) || 0;
 
         // Simplify category name
         let category = 'Other';
@@ -317,12 +317,19 @@ function updateBreakdownChart(data) {
         categories[category] = (categories[category] || 0) + amount;
     });
 
-    // Update legend (we'll keep the donut chart as is for now, just update values)
-    const legendContainer = document.querySelector('.breakdown-legend');
-    if (legendContainer && Object.keys(categories).length > 0) {
-        const colors = ['#F5A623', '#E8721C', '#D0021B', '#8B0000'];
-        const sortedCategories = Object.entries(categories).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const colors = ['#F5A623', '#E8721C', '#D0021B', '#8B0000'];
+    const sortedCategories = Object.entries(categories).sort((a, b) => b[1] - a[1]).slice(0, 4);
 
+    // Store for donut chart
+    chartCategories = sortedCategories.map(([name, value], index) => ({
+        name,
+        value,
+        color: colors[index]
+    }));
+
+    // Update legend
+    const legendContainer = document.querySelector('.breakdown-legend');
+    if (legendContainer && sortedCategories.length > 0) {
         legendContainer.innerHTML = sortedCategories.map(([name, amount], index) => `
             <div class="legend-item">
                 <span class="legend-color" style="background: ${colors[index]}"></span>
@@ -331,6 +338,9 @@ function updateBreakdownChart(data) {
             </div>
         `).join('');
     }
+
+    // Redraw donut chart with new data
+    drawDonutChart();
 }
 
 // Initialize data fetching
@@ -389,12 +399,15 @@ function drawDonutChart() {
     const radius = Math.min(centerX, centerY) - 10;
     const innerRadius = radius * 0.55;
 
-    const data = [
-        { value: 12000, color: '#F5A623' },
-        { value: 6500, color: '#E8721C' },
-        { value: 4000, color: '#D0021B' },
-        { value: 3000, color: '#8B0000' }
-    ];
+    // Use actual data from sheet, or defaults if not loaded yet
+    const data = chartCategories.length > 0
+        ? chartCategories.map(cat => ({ value: cat.value, color: cat.color }))
+        : [
+            { value: 12000, color: '#F5A623' },
+            { value: 6500, color: '#E8721C' },
+            { value: 4000, color: '#D0021B' },
+            { value: 3000, color: '#8B0000' }
+        ];
 
     const total = data.reduce((sum, item) => sum + item.value, 0);
     let startAngle = -Math.PI / 2;
