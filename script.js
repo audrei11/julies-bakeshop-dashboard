@@ -626,13 +626,24 @@ function calculateCostCenterTotals() {
         fajardo: { total: 0, count: 0, transactions: [], categories: {} }
     };
 
-    if (!sheetData || sheetData.length === 0) return;
+    if (!sheetData || sheetData.length === 0) {
+        console.log('No sheet data available for cost center calculation');
+        return;
+    }
 
-    sheetData.forEach(row => {
+    console.log('Calculating cost center totals from', sheetData.length, 'rows');
+    console.log('Sample row:', sheetData[0]);
+
+    sheetData.forEach((row, index) => {
         const costCenterStr = row['Cost center'] || row['cost center'] || row['Cost Center'] || '';
         const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['AMOUNT WITH VAT'] || row['Amount'] || 0) || 0;
         const accountName = row['Account Name'] || row['Account name'] || row['account name'] || '';
         const key = getCostCenterKey(costCenterStr);
+
+        // Log first few rows to debug
+        if (index < 3) {
+            console.log(`Row ${index}: Cost Center="${costCenterStr}" -> Key="${key}", Amount=${amount}, Account="${accountName}"`);
+        }
 
         if (key && costCenterData[key]) {
             costCenterData[key].total += amount;
@@ -784,8 +795,61 @@ function drawAllCostCenterCharts() {
     console.log('Cost center data:', costCenterData);
 
     centers.forEach(centerKey => {
-        console.log(`Drawing chart for ${centerKey}:`, costCenterData[centerKey]);
         drawCostCenterPieChart(centerKey);
+    });
+}
+
+// Draw initial placeholder charts on page load
+function drawPlaceholderCharts() {
+    const centers = ['blumentrit', 'deca', 'walter', 'gagalangin', 'fajardo'];
+
+    centers.forEach(centerKey => {
+        const canvas = document.getElementById(`chart-${centerKey}`);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const chartSize = 120;
+        const dpr = window.devicePixelRatio || 1;
+
+        canvas.width = chartSize * dpr;
+        canvas.height = chartSize * dpr;
+        canvas.style.width = chartSize + 'px';
+        canvas.style.height = chartSize + 'px';
+        ctx.scale(dpr, dpr);
+
+        const centerX = chartSize / 2;
+        const centerY = chartSize / 2;
+        const radius = (chartSize / 2) - 5;
+        const innerRadius = radius * 0.35;
+
+        // Draw placeholder donut with gradient
+        const gradient = ctx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, radius);
+        gradient.addColorStop(0, '#D4D4D4');
+        gradient.addColorStop(1, '#B0B0B0');
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Inner circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = '#FFF9E6';
+        ctx.fill();
+
+        // Loading text in center
+        ctx.fillStyle = '#999';
+        ctx.font = '10px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Loading...', centerX, centerY);
+
+        // Update legend
+        const legendEl = document.getElementById(`legend-${centerKey}`);
+        if (legendEl) {
+            legendEl.innerHTML = '<div style="color: #999; font-size: 10px; text-align: center;">Fetching data...</div>';
+        }
     });
 }
 
@@ -799,11 +863,6 @@ function drawCostCenterPieChart(centerKey) {
 
     const ctx = canvas.getContext('2d');
     const centerData = costCenterData[centerKey];
-
-    if (!centerData) {
-        console.log(`No data for ${centerKey}`);
-        return;
-    }
 
     // Use fixed dimensions (120x120 as set in HTML)
     const chartSize = 120;
@@ -823,49 +882,62 @@ function drawCostCenterPieChart(centerKey) {
     const centerX = chartSize / 2;
     const centerY = chartSize / 2;
     const radius = (chartSize / 2) - 5;
-    const innerRadius = radius * 0.4;
+    const innerRadius = radius * 0.35;
 
     // Clear the canvas
     ctx.clearRect(0, 0, chartSize, chartSize);
 
     // Update total display
     const totalEl = document.getElementById(`total-${centerKey}`);
-    if (totalEl) {
+    if (totalEl && centerData) {
         totalEl.textContent = '₱' + centerData.total.toLocaleString('en-PH');
     }
 
     // Get sorted categories for this cost center
-    const categories = Object.entries(centerData.categories)
-        .map(([name, data]) => ({ name, total: data.total, count: data.count }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 6); // Limit to top 6 categories
+    let categories = [];
+    if (centerData && centerData.categories) {
+        categories = Object.entries(centerData.categories)
+            .map(([name, data]) => ({ name, total: data.total, count: data.count }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 6); // Limit to top 6 categories
+    }
 
     // Store slice data for click detection
     chartSliceData[centerKey] = [];
 
-    if (categories.length === 0) {
-        // Draw empty/loading state with a nice gray donut
+    if (categories.length === 0 || !centerData || centerData.total === 0) {
+        // Draw empty state donut
+        const emptyGradient = ctx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, radius);
+        emptyGradient.addColorStop(0, '#E0E0E0');
+        emptyGradient.addColorStop(1, '#C0C0C0');
+
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#E8E8E8';
+        ctx.fillStyle = emptyGradient;
         ctx.fill();
 
-        // Draw inner circle
+        // Inner circle
         ctx.beginPath();
         ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
         ctx.fillStyle = '#FFF9E6';
         ctx.fill();
 
+        // "No data" text
+        ctx.fillStyle = '#999';
+        ctx.font = '10px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No data', centerX, centerY);
+
         // Update legend
         const legendEl = document.getElementById(`legend-${centerKey}`);
         if (legendEl) {
-            legendEl.innerHTML = '<div class="chart-legend-item"><span class="chart-legend-label" style="color: #999;">Loading data...</span></div>';
+            legendEl.innerHTML = '<div style="color: #999; font-size: 10px; text-align: center;">No expenses</div>';
         }
-        console.log(`No categories for ${centerKey}, showing empty state`);
         return;
     }
 
-    console.log(`Drawing ${categories.length} categories for ${centerKey}:`, categories);
+    console.log(`Drawing ${categories.length} categories for ${centerKey}`);
 
     const total = categories.reduce((sum, cat) => sum + cat.total, 0);
     let startAngle = -Math.PI / 2;
@@ -1108,13 +1180,18 @@ document.querySelectorAll('.cost-center-tab').forEach(tab => {
 // Initialize charts on load
 window.addEventListener('load', () => {
     drawDonutChart();
+    drawPlaceholderCharts(); // Show placeholder charts while loading
     setupChartClickHandlers();
 });
 
 // Redraw on resize
 window.addEventListener('resize', () => {
     drawDonutChart();
-    drawAllCostCenterCharts();
+    if (sheetData && sheetData.length > 0) {
+        drawAllCostCenterCharts();
+    } else {
+        drawPlaceholderCharts();
+    }
 });
 
 // Filter tab functionality
