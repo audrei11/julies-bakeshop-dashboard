@@ -137,48 +137,49 @@
 
             <!-- Right Panel -->
             <div class="right-panel">
-                <!-- Breakdown Chart -->
+                <!-- Breakdown Chart - Cost Centers -->
                 <div class="breakdown-section">
-                    <h2 class="section-title">Breakdown</h2>
+                    <h2 class="section-title">Cost Center Breakdown</h2>
                     <div class="breakdown-content">
                         <div class="donut-chart-container">
                             <canvas id="donutChart" width="180" height="180"></canvas>
                         </div>
-                        <div class="breakdown-legend">
+                        <div class="breakdown-legend" id="breakdown-legend">
+                            <!-- Legend will be populated dynamically -->
                             <div class="legend-item">
-                                <span class="legend-color" style="background: #F5A623;"></span>
-                                <span class="legend-value">₱12,000</span>
-                                <span class="legend-label">Food & Dining</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #E8721C;"></span>
-                                <span class="legend-value">₱6,500</span>
-                                <span class="legend-label">Shopping</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #D0021B;"></span>
-                                <span class="legend-value">₱4,000</span>
-                                <span class="legend-label">Transport</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #8B0000;"></span>
-                                <span class="legend-value">₱3,000</span>
-                                <span class="legend-label">Bills & Utilities</span>
+                                <span class="legend-color" style="background: #C41E3A;"></span>
+                                <span class="legend-value">₱0</span>
+                                <span class="legend-label">Loading...</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Spending Trend -->
-                <div class="trend-section">
-                    <h2 class="section-title">Spending Trend</h2>
-                    <div class="trend-chart">
-                        <div class="trend-value">₱23,500</div>
-                        <canvas id="trendChart" width="300" height="80"></canvas>
-                        <div class="trend-labels">
-                            <span>Mar</span>
-                            <span>Apri</span>
-                            <span>May</span>
+                <!-- Cost Center Expense Details -->
+                <div class="cost-center-section">
+                    <h2 class="section-title">Expense Details by Cost Center</h2>
+                    <div class="cost-center-tabs">
+                        <button class="cost-center-tab active" data-center="all">All</button>
+                        <button class="cost-center-tab" data-center="blumentrit">Blumentrit</button>
+                        <button class="cost-center-tab" data-center="deca">Deca</button>
+                        <button class="cost-center-tab" data-center="walter">Walter</button>
+                        <button class="cost-center-tab" data-center="gagalangin">Gagalangin</button>
+                        <button class="cost-center-tab" data-center="fajardo">Fajardo</button>
+                    </div>
+                    <div class="cost-center-details" id="cost-center-details">
+                        <!-- Details will be populated dynamically -->
+                        <div class="cost-center-summary">
+                            <div class="summary-total">
+                                <span class="summary-label">Total Expenses</span>
+                                <span class="summary-value" id="selected-center-total">₱0</span>
+                            </div>
+                            <div class="summary-count">
+                                <span class="summary-label">Transactions</span>
+                                <span class="summary-value" id="selected-center-count">0</span>
+                            </div>
+                        </div>
+                        <div class="expense-list" id="expense-list">
+                            <div class="loading-message">Select a cost center to view details</div>
                         </div>
                     </div>
                 </div>
@@ -294,6 +295,26 @@
                 <button class="modal-close" id="transactions-modal-close">&times;</button>
             </div>
             <div class="modal-body">
+                <!-- Search and Filter Bar -->
+                <div class="transactions-search-bar">
+                    <div class="search-input-wrapper">
+                        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" class="search-input" id="transaction-search" placeholder="Search transactions...">
+                    </div>
+                    <div class="filter-dropdown-wrapper">
+                        <select class="filter-dropdown" id="cost-center-filter">
+                            <option value="all">All Cost Centers</option>
+                            <option value="blumentrit">Blumentrit (22348)</option>
+                            <option value="deca">Deca (23582)</option>
+                            <option value="walter">Walter (24723)</option>
+                            <option value="gagalangin">Gagalangin (23974)</option>
+                            <option value="fajardo">Fajardo (22755)</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="transactions-modal-table">
                     <div class="transactions-modal-header">
                         <span>Date</span>

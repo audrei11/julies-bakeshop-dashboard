@@ -110,6 +110,9 @@ function updateDashboard(data) {
 
     // Update breakdown chart
     updateBreakdownChart(data);
+
+    // Update cost center charts
+    calculateCostCenterTotals();
 }
 
 // Calculate statistics from data
@@ -531,83 +534,210 @@ function shadeColor(color, percent) {
     ).toString(16).slice(1);
 }
 
-// Draw Trend Chart
-function drawTrendChart() {
-    const canvas = document.getElementById('trendChart');
-    const ctx = canvas.getContext('2d');
+// Cost Center Data
+let costCenterData = {
+    blumentrit: { total: 0, count: 0, transactions: [] },
+    deca: { total: 0, count: 0, transactions: [] },
+    walter: { total: 0, count: 0, transactions: [] },
+    gagalangin: { total: 0, count: 0, transactions: [] },
+    fajardo: { total: 0, count: 0, transactions: [] }
+};
 
-    // High DPI support
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
+// Cost Center Colors
+const costCenterColors = {
+    blumentrit: '#C41E3A',
+    deca: '#F5A623',
+    walter: '#E8721C',
+    gagalangin: '#8B4513',
+    fajardo: '#D0021B'
+};
 
-    const width = rect.width;
-    const height = rect.height;
-    const padding = 20;
+// Cost Center Names
+const costCenterNames = {
+    blumentrit: 'Blumentrit (22348)',
+    deca: 'Deca (23582)',
+    walter: 'Walter (24723)',
+    gagalangin: 'Gagalangin (23974)',
+    fajardo: 'Fajardo (22755)'
+};
 
-    // Data points
-    const points = [
-        { x: padding, y: height - 20 },
-        { x: width * 0.35, y: height - 30 },
-        { x: width * 0.65, y: height - 40 },
-        { x: width - padding, y: height - 25 }
-    ];
+// Get cost center key from string
+function getCostCenterKey(costCenterStr) {
+    const str = costCenterStr.toLowerCase();
+    if (str.includes('blumentrit') || str.includes('22348')) return 'blumentrit';
+    if (str.includes('deca') || str.includes('23582')) return 'deca';
+    if (str.includes('walter') || str.includes('24723')) return 'walter';
+    if (str.includes('gagalangin') || str.includes('23974')) return 'gagalangin';
+    if (str.includes('fajardo') || str.includes('22755')) return 'fajardo';
+    return null;
+}
 
-    // Draw the line with gradient
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+// Calculate Cost Center Totals from sheet data
+function calculateCostCenterTotals() {
+    // Reset totals
+    costCenterData = {
+        blumentrit: { total: 0, count: 0, transactions: [] },
+        deca: { total: 0, count: 0, transactions: [] },
+        walter: { total: 0, count: 0, transactions: [] },
+        gagalangin: { total: 0, count: 0, transactions: [] },
+        fajardo: { total: 0, count: 0, transactions: [] }
+    };
 
-    // Smooth curve through points
-    for (let i = 0; i < points.length - 1; i++) {
-        const xc = (points[i].x + points[i + 1].x) / 2;
-        const yc = (points[i].y + points[i + 1].y) / 2;
-        ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
-    }
-    ctx.quadraticCurveTo(
-        points[points.length - 1].x,
-        points[points.length - 1].y,
-        points[points.length - 1].x,
-        points[points.length - 1].y
-    );
+    if (!sheetData || sheetData.length === 0) return;
 
-    ctx.strokeStyle = '#E8E8E8';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
+    sheetData.forEach(row => {
+        const costCenterStr = row['Cost center'] || row['cost center'] || row['Cost Center'] || '';
+        const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['AMOUNT WITH VAT'] || row['Amount'] || 0) || 0;
+        const key = getCostCenterKey(costCenterStr);
 
-    // Draw points
-    points.forEach((point, index) => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = index === 2 ? '#C41E3A' : '#D0D0D0';
-        ctx.fill();
-
-        if (index === 2) {
-            // Highlight point with glow
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
-            ctx.strokeStyle = 'rgba(196, 30, 58, 0.3)';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+        if (key && costCenterData[key]) {
+            costCenterData[key].total += amount;
+            costCenterData[key].count++;
+            costCenterData[key].transactions.push(row);
         }
     });
+
+    // Update breakdown chart with cost center data
+    updateBreakdownWithCostCenters();
+
+    // Show all expenses by default
+    showCostCenterExpenses('all');
 }
+
+// Update breakdown chart with cost center data (sorted by expense)
+function updateBreakdownWithCostCenters() {
+    // Sort cost centers by total expense (highest first)
+    const sortedCenters = Object.entries(costCenterData)
+        .map(([key, data]) => ({
+            key,
+            name: costCenterNames[key],
+            total: data.total,
+            color: costCenterColors[key]
+        }))
+        .sort((a, b) => b.total - a.total);
+
+    // Update chart categories for donut chart
+    chartCategories = sortedCenters.map(center => ({
+        name: center.name,
+        value: center.total,
+        color: center.color
+    }));
+
+    // Update legend
+    const legendContainer = document.getElementById('breakdown-legend');
+    if (legendContainer) {
+        legendContainer.innerHTML = sortedCenters.map(center => `
+            <div class="legend-item">
+                <span class="legend-color" style="background: ${center.color};"></span>
+                <span class="legend-value">₱${center.total.toLocaleString('en-PH')}</span>
+                <span class="legend-label">${center.name.split(' ')[0]}</span>
+            </div>
+        `).join('');
+    }
+
+    // Redraw donut chart
+    drawDonutChart();
+}
+
+// Show expense details for selected cost center
+function showCostCenterExpenses(centerKey) {
+    const totalEl = document.getElementById('selected-center-total');
+    const countEl = document.getElementById('selected-center-count');
+    const listEl = document.getElementById('expense-list');
+
+    let transactions = [];
+    let total = 0;
+    let count = 0;
+
+    if (centerKey === 'all') {
+        // Combine all transactions
+        Object.values(costCenterData).forEach(data => {
+            transactions = transactions.concat(data.transactions);
+            total += data.total;
+            count += data.count;
+        });
+    } else if (costCenterData[centerKey]) {
+        transactions = costCenterData[centerKey].transactions;
+        total = costCenterData[centerKey].total;
+        count = costCenterData[centerKey].count;
+    }
+
+    // Update summary
+    if (totalEl) totalEl.textContent = '₱' + total.toLocaleString('en-PH');
+    if (countEl) countEl.textContent = count;
+
+    // Sort by date (newest first)
+    transactions.sort((a, b) => {
+        const dateA = parseTransactionDate(a['Date'] || a['date'] || '');
+        const dateB = parseTransactionDate(b['Date'] || b['date'] || '');
+        return dateB - dateA;
+    });
+
+    // Limit to 20 most recent
+    const recentTransactions = transactions.slice(0, 20);
+
+    // Update expense list
+    if (listEl) {
+        if (recentTransactions.length === 0) {
+            listEl.innerHTML = '<div class="loading-message">No transactions found</div>';
+        } else {
+            listEl.innerHTML = recentTransactions.map(row => {
+                const desc = row['Expense description'] || row['Expense Description'] || 'No description';
+                const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0) || 0;
+                const date = formatTransactionDate(row['Date'] || row['date'] || '');
+                return `
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <div class="expense-desc">${desc}</div>
+                            <div class="expense-date">${date}</div>
+                        </div>
+                        <div class="expense-amount">₱${amount.toLocaleString('en-PH')}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+}
+
+// Parse transaction date helper
+function parseTransactionDate(dateStr) {
+    if (!dateStr) return new Date(0);
+    if (typeof dateStr === 'number') {
+        return new Date((dateStr - 25569) * 86400 * 1000);
+    } else if (typeof dateStr === 'string' && dateStr.startsWith('Date(')) {
+        const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
+        if (match) {
+            return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+        }
+    }
+    return new Date(dateStr);
+}
+
+// Format transaction date helper
+function formatTransactionDate(dateStr) {
+    const date = parseTransactionDate(dateStr);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Cost Center Tab Click Handler
+document.querySelectorAll('.cost-center-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.cost-center-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        const centerKey = this.dataset.center;
+        showCostCenterExpenses(centerKey);
+    });
+});
 
 // Initialize charts on load
 window.addEventListener('load', () => {
     drawDonutChart();
-    drawTrendChart();
 });
 
 // Redraw on resize
 window.addEventListener('resize', () => {
     drawDonutChart();
-    drawTrendChart();
 });
 
 // Filter tab functionality
@@ -901,11 +1031,16 @@ pcfForm.addEventListener('submit', (e) => {
 const viewAllBtn = document.getElementById('view-all-btn');
 const transactionsModal = document.getElementById('transactions-modal');
 const transactionsModalClose = document.getElementById('transactions-modal-close');
+const transactionSearch = document.getElementById('transaction-search');
+const costCenterFilter = document.getElementById('cost-center-filter');
 
 // Open transactions modal
 viewAllBtn.addEventListener('click', () => {
     transactionsModal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    // Reset filters
+    if (transactionSearch) transactionSearch.value = '';
+    if (costCenterFilter) costCenterFilter.value = 'all';
     displayAllTransactions();
 });
 
@@ -933,19 +1068,68 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Display all transactions in modal
+// Search input handler
+if (transactionSearch) {
+    transactionSearch.addEventListener('input', () => {
+        displayAllTransactions();
+    });
+}
+
+// Cost center filter handler
+if (costCenterFilter) {
+    costCenterFilter.addEventListener('change', () => {
+        displayAllTransactions();
+    });
+}
+
+// Display all transactions in modal with search and filter
 function displayAllTransactions() {
     const container = document.getElementById('all-transactions-container');
+    const searchTerm = transactionSearch ? transactionSearch.value.toLowerCase() : '';
+    const filterCenter = costCenterFilter ? costCenterFilter.value : 'all';
 
     if (!sheetData || sheetData.length === 0) {
         container.innerHTML = '<div class="loading-message">No transactions available. Click Refresh to load data.</div>';
         return;
     }
 
-    // Sort by date (newest first) and display all
-    const allTransactions = [...sheetData].reverse();
+    // Filter transactions
+    let filteredTransactions = [...sheetData];
 
-    const transactionsHTML = allTransactions.map((row) => {
+    // Apply cost center filter
+    if (filterCenter !== 'all') {
+        filteredTransactions = filteredTransactions.filter(row => {
+            const costCenter = (row['Cost center'] || row['cost center'] || row['Cost Center'] || '').toLowerCase();
+            return getCostCenterKey(costCenter) === filterCenter;
+        });
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+        filteredTransactions = filteredTransactions.filter(row => {
+            const cluster = (row['Cluster'] || row['cluster'] || '').toLowerCase();
+            const expenseDesc = (row['Expense description'] || row['Expense Description'] || '').toLowerCase();
+            const accountName = (row['Account Name'] || row['Account name'] || '').toLowerCase();
+            const vendor = (row['vendor name'] || row['Vendor'] || '').toLowerCase();
+            const costCenter = (row['Cost center'] || row['cost center'] || '').toLowerCase();
+
+            return cluster.includes(searchTerm) ||
+                   expenseDesc.includes(searchTerm) ||
+                   accountName.includes(searchTerm) ||
+                   vendor.includes(searchTerm) ||
+                   costCenter.includes(searchTerm);
+        });
+    }
+
+    // Sort by date (newest first)
+    filteredTransactions.reverse();
+
+    if (filteredTransactions.length === 0) {
+        container.innerHTML = '<div class="loading-message">No transactions match your search criteria</div>';
+        return;
+    }
+
+    const transactionsHTML = filteredTransactions.map((row) => {
         // Get values matching Google Sheet column names
         const date = row['Date'] || row['date'] || row['DATE'] || '';
         const cluster = row['Cluster'] || row['cluster'] || '';

@@ -604,55 +604,215 @@ body {
     font-weight: 500;
 }
 
-/* Trend Section */
-.trend-section {
+/* Cost Center Section */
+.cost-center-section {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
     padding: 25px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
-.trend-chart {
+/* Cost Center Tabs */
+.cost-center-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.cost-center-tab {
+    padding: 8px 14px;
+    border: 2px solid #E8DFC4;
+    border-radius: 20px;
+    background: white;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8B7355;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.cost-center-tab:hover {
+    border-color: #FFD93D;
+    background: #FFF9E6;
+}
+
+.cost-center-tab.active {
+    background: linear-gradient(135deg, #C41E3A 0%, #8B0000 100%);
+    border-color: #C41E3A;
+    color: white;
+}
+
+/* Cost Center Details */
+.cost-center-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.cost-center-summary {
+    display: flex;
+    gap: 15px;
+}
+
+.summary-total,
+.summary-count {
+    flex: 1;
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFF5CC 100%);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    text-align: center;
+}
+
+.summary-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8B7355;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.summary-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #C41E3A;
+}
+
+/* Expense List */
+.expense-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border-radius: 12px;
+    background: #F8F8F8;
+}
+
+.expense-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #EEE;
+    background: white;
+    transition: background 0.2s ease;
+}
+
+.expense-item:hover {
+    background: #FFF9E6;
+}
+
+.expense-item:last-child {
+    border-bottom: none;
+}
+
+.expense-info {
+    flex: 1;
+}
+
+.expense-desc {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5C3317;
+    margin-bottom: 3px;
+}
+
+.expense-date {
+    font-size: 11px;
+    color: #999;
+}
+
+.expense-amount {
+    font-size: 14px;
+    font-weight: 700;
+    color: #C41E3A;
+}
+
+/* Expense List Scrollbar */
+.expense-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.expense-list::-webkit-scrollbar-track {
+    background: #F0F0F0;
+    border-radius: 3px;
+}
+
+.expense-list::-webkit-scrollbar-thumb {
+    background: #C41E3A;
+    border-radius: 3px;
+}
+
+/* Search Bar Styles */
+.transactions-search-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    min-width: 200px;
     position: relative;
 }
 
-.trend-value {
+.search-icon {
     position: absolute;
-    top: 0;
-    right: 50px;
-    background: #C41E3A;
-    color: white;
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    z-index: 10;
-}
-
-.trend-value::after {
-    content: '';
-    position: absolute;
-    bottom: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid #C41E3A;
-}
-
-#trendChart {
-    width: 100%;
-    height: 80px;
-    margin-top: 40px;
-}
-
-.trend-labels {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 20px;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
     color: #999;
-    font-size: 12px;
-    font-weight: 500;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 2px solid #E8DFC4;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #C41E3A;
+    box-shadow: 0 0 0 4px rgba(196, 30, 58, 0.1);
+}
+
+.search-input::placeholder {
+    color: #AAA;
+}
+
+.filter-dropdown-wrapper {
+    min-width: 180px;
+}
+
+.filter-dropdown {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #E8DFC4;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23C41E3A' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    padding-right: 40px;
+}
+
+.filter-dropdown:focus {
+    outline: none;
+    border-color: #C41E3A;
+    box-shadow: 0 0 0 4px rgba(196, 30, 58, 0.1);
 }
 
 /* Responsive Design */
@@ -1123,20 +1283,64 @@ body {
         font-size: 12px;
     }
 
-    /* Trend chart */
-    .trend-value {
+    /* Cost center section mobile */
+    .cost-center-section {
+        padding: 15px;
+    }
+
+    .cost-center-tabs {
+        gap: 6px;
+    }
+
+    .cost-center-tab {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+
+    .cost-center-summary {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .summary-value {
+        font-size: 18px;
+    }
+
+    .expense-list {
+        max-height: 200px;
+    }
+
+    .expense-item {
+        padding: 10px 12px;
+    }
+
+    .expense-desc {
         font-size: 12px;
-        padding: 5px 10px;
-        right: 20px;
     }
 
-    #trendChart {
-        height: 60px;
+    .expense-amount {
+        font-size: 13px;
     }
 
-    .trend-labels {
-        padding: 8px 10px;
-        font-size: 11px;
+    /* Search bar mobile */
+    .transactions-search-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .search-input-wrapper,
+    .filter-dropdown-wrapper {
+        min-width: 100%;
+    }
+
+    .search-input,
+    .filter-dropdown {
+        font-size: 16px;
+        padding: 10px 12px 10px 40px;
+    }
+
+    .filter-dropdown {
+        padding: 10px 35px 10px 12px;
     }
 
     /* Data refresh indicator mobile */
@@ -1162,7 +1366,7 @@ body {
 .stat-card,
 .transactions-section,
 .breakdown-section,
-.trend-section {
+.cost-center-section {
     animation: fadeIn 0.5s ease-out forwards;
 }
 
@@ -1929,26 +2133,61 @@ body {
         height: 100%;
         max-height: 100%;
         border-radius: 0;
+        margin: 0;
     }
 
     .transactions-modal-table {
         overflow-x: auto;
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        max-height: calc(100vh - 150px);
+    }
+
+    .transactions-modal-header,
+    .transactions-modal-body {
+        min-width: 750px;
+        width: max-content;
     }
 
     .transactions-modal-header {
-        min-width: 800px;
-        grid-template-columns: 90px 100px 1fr 1fr 1fr 100px;
+        grid-template-columns: 85px 90px 150px 150px 120px 90px;
         font-size: 11px;
+        padding: 12px 15px;
     }
 
     .transaction-modal-row {
-        min-width: 800px;
-        grid-template-columns: 90px 100px 1fr 1fr 1fr 100px;
-        font-size: 12px;
+        min-width: 750px;
+        width: max-content;
+        grid-template-columns: 85px 90px 150px 150px 120px 90px;
+        font-size: 11px;
+        padding: 12px 15px;
     }
 
     .transactions-modal-body {
-        min-width: 800px;
+        padding: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .transactions-modal-table {
+        max-height: calc(100vh - 120px);
+    }
+
+    .transactions-modal-header,
+    .transactions-modal-body,
+    .transaction-modal-row {
+        min-width: 700px;
+    }
+
+    .transactions-modal-header {
+        grid-template-columns: 80px 85px 140px 140px 110px 85px;
+        font-size: 10px;
+        padding: 10px 12px;
+    }
+
+    .transaction-modal-row {
+        grid-template-columns: 80px 85px 140px 140px 110px 85px;
+        font-size: 10px;
+        padding: 10px 12px;
     }
 }
