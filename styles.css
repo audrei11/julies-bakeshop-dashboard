@@ -556,52 +556,171 @@ body {
     gap: 20px;
 }
 
-.breakdown-section {
+/* Cost Center Charts Section */
+.cost-center-charts-section {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
     padding: 25px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
-.breakdown-content {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+.cost-center-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
 }
 
-.donut-chart-container {
+.cost-center-chart-card {
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFF5CC 100%);
+    border-radius: 16px;
+    padding: 15px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.cost-center-chart-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(196, 30, 58, 0.2);
+    border-color: #C41E3A;
+}
+
+.cost-center-chart-card.active {
+    border-color: #C41E3A;
+    box-shadow: 0 8px 25px rgba(196, 30, 58, 0.25);
+}
+
+.chart-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #5C3317;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mini-chart-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.mini-chart-container canvas {
+    cursor: pointer;
+}
+
+.chart-total {
+    font-size: 16px;
+    font-weight: 700;
+    color: #C41E3A;
+    margin-bottom: 8px;
+}
+
+.chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+    max-height: 80px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.chart-legend::-webkit-scrollbar {
+    width: 4px;
+}
+
+.chart-legend::-webkit-scrollbar-track {
+    background: #F0F0F0;
+    border-radius: 2px;
+}
+
+.chart-legend::-webkit-scrollbar-thumb {
+    background: #C41E3A;
+    border-radius: 2px;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.chart-legend-item:hover {
+    background: rgba(196, 30, 58, 0.1);
+}
+
+.chart-legend-item.active {
+    background: rgba(196, 30, 58, 0.15);
+}
+
+.chart-legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
     flex-shrink: 0;
 }
 
-.breakdown-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.chart-legend-label {
+    color: #5C3317;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.legend-item {
+.chart-legend-value {
+    color: #C41E3A;
+    font-weight: 600;
+}
+
+/* Selected Filter Display */
+.selected-filter {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFF5CC 100%);
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-.legend-color {
-    width: 20px;
-    height: 14px;
-    border-radius: 3px;
+.filter-label {
+    font-size: 12px;
+    color: #8B7355;
+    font-weight: 500;
 }
 
-.legend-value {
+.filter-value {
+    font-size: 13px;
     font-weight: 700;
     color: #C41E3A;
-    font-size: 14px;
-    min-width: 70px;
+    flex: 1;
 }
 
-.legend-label {
-    color: #5C3317;
-    font-size: 13px;
-    font-weight: 500;
+.clear-filter-btn {
+    background: #C41E3A;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.clear-filter-btn:hover {
+    background: #A01830;
 }
 
 /* Cost Center Section */
