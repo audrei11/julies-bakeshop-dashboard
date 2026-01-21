@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julie's Bakeshop - Employee Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Header -->
+        <header class="login-header">
+            <div class="logo-container">
+                <div class="logo">
+                    <span class="logo-icon">🥐</span>
+                    <div class="logo-text">
+                        <span class="logo-julies">JULIE'S</span>
+                        <span class="logo-bakeshop">BAKESHOP</span>
+                    </div>
+                </div>
+            </div>
+            <div class="datetime-container">
+                <div class="time" id="current-time">12:35:29 PM</div>
+                <div class="date" id="current-date">Sunday, January 18, 2026</div>
+            </div>
+        </header>
+
+        <!-- Sparkles -->
+        <div class="sparkle sparkle-1">✦</div>
+        <div class="sparkle sparkle-2">✦</div>
+        <div class="sparkle sparkle-3">✦</div>
+        <div class="sparkle sparkle-4">✦</div>
+
+        <!-- Main Content -->
+        <main class="login-main">
+            <div class="logo-image-container">
+                <img src="julies-logo.png" alt="Julie's Bakeshop" class="logo-image">
+            </div>
+
+            <h1 class="welcome-title">Welcome to Julie's Bakeshop</h1>
+            <p class="welcome-subtitle">Employee Portal</p>
+            <p class="welcome-description">Log your attendance and access your workplace tools</p>
+
+            <button class="login-btn" id="login-btn">
+                Proceed to Login
+            </button>
+        </main>
+
+        <!-- Footer Wave -->
+        <div class="footer-wave">
+            <div class="wave-cube"></div>
+        </div>
+    </div>
+
+    <script>
+        // Update time and date
+        function updateDateTime() {
+            const now = new Date();
+
+            // Format time
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+
+            // Format date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = now.toLocaleDateString('en-US', options);
+
+            document.getElementById('current-time').textContent = timeString;
+            document.getElementById('current-date').textContent = dateString;
+        }
+
+        // Update every second
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Login button click
+        document.getElementById('login-btn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
