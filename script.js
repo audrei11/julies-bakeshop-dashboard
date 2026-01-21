@@ -780,7 +780,11 @@ function formatTransactionDate(dateStr) {
 function drawAllCostCenterCharts() {
     const centers = ['blumentrit', 'deca', 'walter', 'gagalangin', 'fajardo'];
 
+    console.log('Drawing all cost center charts...');
+    console.log('Cost center data:', costCenterData);
+
     centers.forEach(centerKey => {
+        console.log(`Drawing chart for ${centerKey}:`, costCenterData[centerKey]);
         drawCostCenterPieChart(centerKey);
     });
 }
@@ -788,24 +792,41 @@ function drawAllCostCenterCharts() {
 // Draw individual cost center pie chart
 function drawCostCenterPieChart(centerKey) {
     const canvas = document.getElementById(`chart-${centerKey}`);
-    if (!canvas) return;
+    if (!canvas) {
+        console.log(`Canvas not found for ${centerKey}`);
+        return;
+    }
 
     const ctx = canvas.getContext('2d');
     const centerData = costCenterData[centerKey];
 
-    // High DPI support
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
+    if (!centerData) {
+        console.log(`No data for ${centerKey}`);
+        return;
+    }
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const radius = Math.min(centerX, centerY) - 5;
+    // Use fixed dimensions (120x120 as set in HTML)
+    const chartSize = 120;
+    const dpr = window.devicePixelRatio || 1;
+
+    // Set canvas internal size for high DPI
+    canvas.width = chartSize * dpr;
+    canvas.height = chartSize * dpr;
+
+    // Set display size
+    canvas.style.width = chartSize + 'px';
+    canvas.style.height = chartSize + 'px';
+
+    // Scale context for high DPI
+    ctx.scale(dpr, dpr);
+
+    const centerX = chartSize / 2;
+    const centerY = chartSize / 2;
+    const radius = (chartSize / 2) - 5;
     const innerRadius = radius * 0.4;
+
+    // Clear the canvas
+    ctx.clearRect(0, 0, chartSize, chartSize);
 
     // Update total display
     const totalEl = document.getElementById(`total-${centerKey}`);
@@ -823,24 +844,28 @@ function drawCostCenterPieChart(centerKey) {
     chartSliceData[centerKey] = [];
 
     if (categories.length === 0) {
-        // Draw empty state
+        // Draw empty/loading state with a nice gray donut
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#E0E0E0';
+        ctx.fillStyle = '#E8E8E8';
         ctx.fill();
 
+        // Draw inner circle
         ctx.beginPath();
         ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = '#FFF9E6';
         ctx.fill();
 
         // Update legend
         const legendEl = document.getElementById(`legend-${centerKey}`);
         if (legendEl) {
-            legendEl.innerHTML = '<div class="chart-legend-item"><span class="chart-legend-label">No data</span></div>';
+            legendEl.innerHTML = '<div class="chart-legend-item"><span class="chart-legend-label" style="color: #999;">Loading data...</span></div>';
         }
+        console.log(`No categories for ${centerKey}, showing empty state`);
         return;
     }
+
+    console.log(`Drawing ${categories.length} categories for ${centerKey}:`, categories);
 
     const total = categories.reduce((sum, cat) => sum + cat.total, 0);
     let startAngle = -Math.PI / 2;
