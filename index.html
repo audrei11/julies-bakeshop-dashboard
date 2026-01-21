@@ -29,6 +29,12 @@
                 </div>
                 <span class="sparkle">✦</span>
             </div>
+            <button class="refresh-btn" id="refresh-btn" title="Refresh Data">
+                <svg class="refresh-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                <span>Refresh</span>
+            </button>
             <div class="datetime-container">
                 <div class="time" id="current-time">10:55:29 AM</div>
                 <div class="date" id="current-date">Sunday, January 18, 2026</div>
@@ -93,7 +99,7 @@
                     <button class="filter-tab active">All</button>
                     <button class="filter-tab">Food & Dining</button>
                     <button class="filter-tab">Shopping</button>
-                    <a href="#" class="see-all">Spa ALL ></a>
+                    <button class="view-all-btn" id="view-all-btn">View All</button>
                 </div>
                 <div class="transactions-table">
                     <div class="table-header">
@@ -250,6 +256,32 @@
 
                     <button type="submit" class="form-submit-btn">Submit</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View All Transactions Modal -->
+    <div class="modal-overlay" id="transactions-modal">
+        <div class="modal-content transactions-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">All Transactions</h2>
+                <p class="modal-subtitle">Complete transaction history from Google Sheets</p>
+                <button class="modal-close" id="transactions-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transactions-modal-table">
+                    <div class="transactions-modal-header">
+                        <span>Date</span>
+                        <span>Cluster</span>
+                        <span>Expense Description</span>
+                        <span>Account Name</span>
+                        <span>Vendor</span>
+                        <span>Amount</span>
+                    </div>
+                    <div class="transactions-modal-body" id="all-transactions-container">
+                        <div class="loading-message">Loading all transactions...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -8,8 +8,7 @@ const API_KEY = ''; // Optional: Add your Google API key for higher limits
 // Note: We'll add a cache-buster parameter when fetching
 const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
 
-// Data refresh interval (30 seconds)
-const REFRESH_INTERVAL = 30000;
+// Manual refresh only - no automatic syncing
 
 // Store fetched data globally
 let sheetData = [];
@@ -152,11 +151,24 @@ function calculateStats(data) {
             if (typeof dateStr === 'number') {
                 // Excel serial date
                 rowDate = new Date((dateStr - 25569) * 86400 * 1000);
+            } else if (typeof dateStr === 'string' && dateStr.startsWith('Date(')) {
+                // Google Sheets Date format: "Date(2026,0,21)" - month is 0-indexed
+                const match = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
+                if (match) {
+                    rowDate = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+                } else {
+                    rowDate = new Date();
+                }
             } else {
                 rowDate = new Date(dateStr);
             }
         } else {
             rowDate = new Date(); // Default to today if no date
+        }
+
+        // Validate date - if invalid, default to today
+        if (isNaN(rowDate.getTime())) {
+            rowDate = new Date();
         }
 
         // Add to totals
@@ -245,14 +257,27 @@ function updateTransactionsTable(data) {
         if (date) {
             let dateObj;
             if (typeof date === 'number') {
+                // Excel serial date
                 dateObj = new Date((date - 25569) * 86400 * 1000);
+            } else if (typeof date === 'string' && date.startsWith('Date(')) {
+                // Google Sheets Date format: "Date(2026,0,21)" - month is 0-indexed
+                const match = date.match(/Date\((\d+),(\d+),(\d+)\)/);
+                if (match) {
+                    dateObj = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+                }
             } else {
                 dateObj = new Date(date);
             }
-            const month = dateObj.toLocaleString('en-US', { month: 'short' });
-            const day = dateObj.getDate();
-            const year = dateObj.getFullYear();
-            formattedDate = `${month} ${day}<br>${year}`;
+
+            // Only format if we have a valid date
+            if (dateObj && !isNaN(dateObj.getTime())) {
+                const month = dateObj.toLocaleString('en-US', { month: 'short' });
+                const day = dateObj.getDate();
+                const year = dateObj.getFullYear();
+                formattedDate = `${month} ${day}<br>${year}`;
+            } else {
+                formattedDate = 'N/A';
+            }
         }
 
         // Format amount
@@ -345,11 +370,24 @@ function updateBreakdownChart(data) {
 
 // Initialize data fetching
 function initDataFetch() {
-    // Initial fetch
+    // Initial fetch only - no automatic refresh
     fetchSheetData();
+}
 
-    // Set up periodic refresh
-    setInterval(fetchSheetData, REFRESH_INTERVAL);
+// Manual refresh button handler
+function setupRefreshButton() {
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            // Add spinning animation
+            refreshBtn.classList.add('loading');
+            await fetchSheetData();
+            // Remove spinning animation after fetch
+            setTimeout(() => {
+                refreshBtn.classList.remove('loading');
+            }, 500);
+        });
+    }
 }
 
 // Update time and date
@@ -379,6 +417,9 @@ updateDateTime();
 
 // Initialize data fetch on page load
 initDataFetch();
+
+// Setup refresh button
+setupRefreshButton();
 
 // Draw Donut Chart
 function drawDonutChart() {
@@ -842,3 +883,102 @@ pcfForm.addEventListener('submit', (e) => {
     pcfModal.classList.remove('active');
     document.body.style.overflow = '';
 });
+
+// ==================== VIEW ALL TRANSACTIONS MODAL ====================
+const viewAllBtn = document.getElementById('view-all-btn');
+const transactionsModal = document.getElementById('transactions-modal');
+const transactionsModalClose = document.getElementById('transactions-modal-close');
+
+// Open transactions modal
+viewAllBtn.addEventListener('click', () => {
+    transactionsModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    displayAllTransactions();
+});
+
+// Close transactions modal
+transactionsModalClose.addEventListener('click', () => {
+    transactionsModal.classList.remove('active');
+    document.body.style.overflow = '';
+});
+
+// Close modal when clicking outside
+transactionsModal.addEventListener('click', (e) => {
+    if (e.target === transactionsModal) {
+        transactionsModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Update Escape key handler to include transactions modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (transactionsModal.classList.contains('active')) {
+            transactionsModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+});
+
+// Display all transactions in modal
+function displayAllTransactions() {
+    const container = document.getElementById('all-transactions-container');
+
+    if (!sheetData || sheetData.length === 0) {
+        container.innerHTML = '<div class="loading-message">No transactions available. Click Refresh to load data.</div>';
+        return;
+    }
+
+    // Sort by date (newest first) and display all
+    const allTransactions = [...sheetData].reverse();
+
+    const transactionsHTML = allTransactions.map((row) => {
+        // Get values matching Google Sheet column names
+        const date = row['Date'] || row['date'] || row['DATE'] || '';
+        const cluster = row['Cluster'] || row['cluster'] || '';
+        const expenseDesc = row['Expense description'] || row['Expense Description'] || row['expense description'] || '';
+        const accountName = row['Account Name'] || row['Account name'] || row['account name'] || '';
+        const vendor = row['vendor name'] || row['Vendor'] || row['vendor'] || row['Submitted'] || '';
+        const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['AMOUNT WITH VAT'] || row['Amount'] || 0;
+
+        // Format date
+        let formattedDate = 'N/A';
+        if (date) {
+            let dateObj;
+            if (typeof date === 'number') {
+                dateObj = new Date((date - 25569) * 86400 * 1000);
+            } else if (typeof date === 'string' && date.startsWith('Date(')) {
+                const match = date.match(/Date\((\d+),(\d+),(\d+)\)/);
+                if (match) {
+                    dateObj = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+                }
+            } else {
+                dateObj = new Date(date);
+            }
+
+            if (dateObj && !isNaN(dateObj.getTime())) {
+                formattedDate = dateObj.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            }
+        }
+
+        // Format amount
+        const formattedAmount = '₱' + parseFloat(amount || 0).toLocaleString('en-PH');
+
+        return `
+            <div class="transaction-modal-row">
+                <span class="date-cell">${formattedDate}</span>
+                <span class="cluster-cell">${cluster || 'N/A'}</span>
+                <span class="description-cell">${expenseDesc || 'N/A'}</span>
+                <span class="account-cell">${accountName || 'N/A'}</span>
+                <span class="vendor-cell">${vendor || 'N/A'}</span>
+                <span class="amount-cell">${formattedAmount}</span>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = transactionsHTML || '<div class="loading-message">No transactions to display</div>';
+}
