@@ -227,8 +227,8 @@ function updateStatCards(stats) {
 function updateTransactionsTable(data) {
     const container = document.getElementById('transactions-container');
 
-    // Get the most recent 10 transactions
-    const recentTransactions = data.slice(-10).reverse();
+    // Get the most recent 5 transactions
+    const recentTransactions = data.slice(-5).reverse();
 
     if (recentTransactions.length === 0) {
         container.innerHTML = '<div class="loading-message">No transactions to display</div>';
