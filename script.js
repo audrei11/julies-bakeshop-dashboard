@@ -390,6 +390,16 @@ function setupRefreshButton() {
     }
 }
 
+// Logout button handler
+function setupLogoutButton() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            window.location.href = 'login.html';
+        });
+    }
+}
+
 // Update time and date
 function updateDateTime() {
     const now = new Date();
@@ -420,6 +430,9 @@ initDataFetch();
 
 // Setup refresh button
 setupRefreshButton();
+
+// Setup logout button
+setupLogoutButton();
 
 // Draw Donut Chart
 function drawDonutChart() {
