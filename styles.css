@@ -556,6 +556,57 @@ body {
     gap: 20px;
 }
 
+/* Breakdown Section - Main Pie Chart */
+.breakdown-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.breakdown-content {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-top: 15px;
+}
+
+.donut-chart-container {
+    flex-shrink: 0;
+}
+
+.breakdown-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #5C3317;
+    min-width: 80px;
+}
+
+.legend-label {
+    font-size: 13px;
+    color: #8B7355;
+}
+
 /* Cost Center Charts Section */
 .cost-center-charts-section {
     background: rgba(255, 255, 255, 0.95);

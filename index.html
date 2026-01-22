@@ -137,79 +137,62 @@
 
             <!-- Right Panel -->
             <div class="right-panel">
-                <!-- Cost Center Pie Charts Grid -->
+                <!-- Main Cost Center Breakdown Chart -->
+                <div class="breakdown-section">
+                    <h2 class="section-title">Cost Center Breakdown</h2>
+                    <div class="breakdown-content">
+                        <div class="donut-chart-container">
+                            <canvas id="donutChart" width="180" height="180"></canvas>
+                        </div>
+                        <div class="breakdown-legend" id="breakdown-legend">
+                            <!-- Legend will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5 Cost Center Mini Charts -->
                 <div class="cost-center-charts-section">
-                    <h2 class="section-title">Cost Center Expense Breakdown</h2>
+                    <h2 class="section-title">Expenses by Cost Center</h2>
                     <div class="cost-center-charts-grid">
                         <!-- Blumentrit Chart -->
                         <div class="cost-center-chart-card" data-center="blumentrit">
                             <h3 class="chart-title">Blumentrit</h3>
                             <div class="mini-chart-container">
-                                <canvas id="chart-blumentrit" width="120" height="120"></canvas>
+                                <canvas id="chart-blumentrit" width="100" height="100"></canvas>
                             </div>
                             <div class="chart-total" id="total-blumentrit">₱0</div>
-                            <div class="chart-legend" id="legend-blumentrit"></div>
                         </div>
                         <!-- Deca Chart -->
                         <div class="cost-center-chart-card" data-center="deca">
                             <h3 class="chart-title">Deca</h3>
                             <div class="mini-chart-container">
-                                <canvas id="chart-deca" width="120" height="120"></canvas>
+                                <canvas id="chart-deca" width="100" height="100"></canvas>
                             </div>
                             <div class="chart-total" id="total-deca">₱0</div>
-                            <div class="chart-legend" id="legend-deca"></div>
                         </div>
                         <!-- Walter Chart -->
                         <div class="cost-center-chart-card" data-center="walter">
                             <h3 class="chart-title">Walter</h3>
                             <div class="mini-chart-container">
-                                <canvas id="chart-walter" width="120" height="120"></canvas>
+                                <canvas id="chart-walter" width="100" height="100"></canvas>
                             </div>
                             <div class="chart-total" id="total-walter">₱0</div>
-                            <div class="chart-legend" id="legend-walter"></div>
                         </div>
                         <!-- Gagalangin Chart -->
                         <div class="cost-center-chart-card" data-center="gagalangin">
                             <h3 class="chart-title">Gagalangin</h3>
                             <div class="mini-chart-container">
-                                <canvas id="chart-gagalangin" width="120" height="120"></canvas>
+                                <canvas id="chart-gagalangin" width="100" height="100"></canvas>
                             </div>
                             <div class="chart-total" id="total-gagalangin">₱0</div>
-                            <div class="chart-legend" id="legend-gagalangin"></div>
                         </div>
                         <!-- Fajardo Chart -->
                         <div class="cost-center-chart-card" data-center="fajardo">
                             <h3 class="chart-title">Fajardo</h3>
                             <div class="mini-chart-container">
-                                <canvas id="chart-fajardo" width="120" height="120"></canvas>
+                                <canvas id="chart-fajardo" width="100" height="100"></canvas>
                             </div>
                             <div class="chart-total" id="total-fajardo">₱0</div>
-                            <div class="chart-legend" id="legend-fajardo"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Expense Details Panel -->
-                <div class="cost-center-section">
-                    <h2 class="section-title">Expense Details</h2>
-                    <div class="selected-filter" id="selected-filter">
-                        <span class="filter-label">Showing:</span>
-                        <span class="filter-value" id="filter-display">All Transactions</span>
-                        <button class="clear-filter-btn" id="clear-filter" style="display: none;">Clear Filter</button>
-                    </div>
-                    <div class="cost-center-details" id="cost-center-details">
-                        <div class="cost-center-summary">
-                            <div class="summary-total">
-                                <span class="summary-label">Total Expenses</span>
-                                <span class="summary-value" id="selected-center-total">₱0</span>
-                            </div>
-                            <div class="summary-count">
-                                <span class="summary-label">Transactions</span>
-                                <span class="summary-value" id="selected-center-count">0</span>
-                            </div>
-                        </div>
-                        <div class="expense-list" id="expense-list">
-                            <div class="loading-message">Click on a pie chart slice to view details</div>
                         </div>
                     </div>
                 </div>
