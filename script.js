@@ -799,7 +799,7 @@ function drawPlaceholderCharts() {
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        const chartSize = 100;
+        const chartSize = 140;
         const dpr = window.devicePixelRatio || 1;
 
         canvas.width = chartSize * dpr;
@@ -810,28 +810,64 @@ function drawPlaceholderCharts() {
 
         const centerX = chartSize / 2;
         const centerY = chartSize / 2;
-        const radius = (chartSize / 2) - 5;
-        const innerRadius = radius * 0.4;
+        const radius = (chartSize / 2) - 10;
+        const innerRadius = radius * 0.5;
 
-        // Draw placeholder donut with gradient
-        const gradient = ctx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, radius);
-        gradient.addColorStop(0, '#D4D4D4');
-        gradient.addColorStop(1, '#B0B0B0');
+        // Draw 3D effect - bottom shadow
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY + 8, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fill();
+
+        // Draw outer ring with gradient (loading state - light gray)
+        const gradient = ctx.createLinearGradient(0, centerY - radius, 0, centerY + radius);
+        gradient.addColorStop(0, '#F0F0F0');
+        gradient.addColorStop(0.5, '#E0E0E0');
+        gradient.addColorStop(1, '#D0D0D0');
 
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Inner circle
+        // Draw inner circle with gradient
+        const innerGradient = ctx.createRadialGradient(centerX, centerY - 5, 0, centerX, centerY, innerRadius);
+        innerGradient.addColorStop(0, '#FFFFFF');
+        innerGradient.addColorStop(0.7, '#FFF9E6');
+        innerGradient.addColorStop(1, '#F5EED6');
+
         ctx.beginPath();
         ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#FFF9E6';
+        ctx.fillStyle = innerGradient;
         ctx.fill();
+
+        // Add "Loading..." text
+        ctx.fillStyle = '#999';
+        ctx.font = '600 10px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Loading...', centerX, centerY);
+
+        // Update center value
+        const centerEl = document.getElementById(`center-${centerKey}`);
+        if (centerEl) {
+            centerEl.textContent = '...';
+            centerEl.style.display = 'none';
+        }
+
+        // Update total
+        const totalEl = document.getElementById(`total-${centerKey}`);
+        if (totalEl) totalEl.textContent = 'Loading...';
+
+        // Update legend
+        const legendEl = document.getElementById(`legend-${centerKey}`);
+        if (legendEl) {
+            legendEl.innerHTML = '<div style="color: #999; font-size: 11px; text-align: center;">Loading data...</div>';
+        }
     });
 }
 
-// Draw individual cost center pie chart
+// Draw individual cost center pie chart with 3D effect
 function drawCostCenterPieChart(centerKey) {
     const canvas = document.getElementById(`chart-${centerKey}`);
     if (!canvas) {
@@ -842,8 +878,8 @@ function drawCostCenterPieChart(centerKey) {
     const ctx = canvas.getContext('2d');
     const centerData = costCenterData[centerKey];
 
-    // Use fixed dimensions (100x100 as set in HTML)
-    const chartSize = 100;
+    // Use fixed dimensions (140x140 as set in HTML)
+    const chartSize = 140;
     const dpr = window.devicePixelRatio || 1;
 
     // Set canvas internal size for high DPI
@@ -859,16 +895,22 @@ function drawCostCenterPieChart(centerKey) {
 
     const centerX = chartSize / 2;
     const centerY = chartSize / 2;
-    const radius = (chartSize / 2) - 5;
-    const innerRadius = radius * 0.4;
+    const radius = (chartSize / 2) - 10;
+    const innerRadius = radius * 0.5;
 
     // Clear the canvas
     ctx.clearRect(0, 0, chartSize, chartSize);
 
     // Update total display
     const totalEl = document.getElementById(`total-${centerKey}`);
+    const centerEl = document.getElementById(`center-${centerKey}`);
+    const legendEl = document.getElementById(`legend-${centerKey}`);
+
     if (totalEl && centerData) {
         totalEl.textContent = '₱' + centerData.total.toLocaleString('en-PH');
+    }
+    if (centerEl && centerData) {
+        centerEl.textContent = '₱' + centerData.total.toLocaleString('en-PH', { maximumFractionDigits: 0 });
     }
 
     // Get sorted categories for this cost center
@@ -877,38 +919,72 @@ function drawCostCenterPieChart(centerKey) {
         categories = Object.entries(centerData.categories)
             .map(([name, data]) => ({ name, total: data.total, count: data.count }))
             .sort((a, b) => b.total - a.total)
-            .slice(0, 6); // Limit to top 6 categories
+            .slice(0, 5); // Limit to top 5 categories
     }
 
     if (categories.length === 0 || !centerData || centerData.total === 0) {
-        // Draw empty state donut
-        const emptyGradient = ctx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, radius);
-        emptyGradient.addColorStop(0, '#E0E0E0');
-        emptyGradient.addColorStop(1, '#C0C0C0');
+        // Draw empty state 3D donut
+        // Shadow
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY + 8, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fill();
+
+        // Outer ring
+        const emptyGradient = ctx.createLinearGradient(0, centerY - radius, 0, centerY + radius);
+        emptyGradient.addColorStop(0, '#E8E8E8');
+        emptyGradient.addColorStop(0.5, '#D0D0D0');
+        emptyGradient.addColorStop(1, '#B8B8B8');
 
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.fillStyle = emptyGradient;
         ctx.fill();
 
-        // Inner circle
+        // Inner circle with gradient
+        const innerGradient = ctx.createLinearGradient(0, centerY - innerRadius, 0, centerY + innerRadius);
+        innerGradient.addColorStop(0, '#FFFFFF');
+        innerGradient.addColorStop(1, '#F5F5F5');
+
         ctx.beginPath();
         ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#FFF9E6';
+        ctx.fillStyle = innerGradient;
         ctx.fill();
+
+        // No Data text
+        ctx.fillStyle = '#999';
+        ctx.font = '600 11px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No Data', centerX, centerY);
+
+        if (centerEl) centerEl.style.display = 'none';
+
+        // Update legend with empty state
+        if (legendEl) {
+            legendEl.innerHTML = '<div style="color: #999; font-size: 11px; text-align: center;">No expenses recorded</div>';
+        }
         return;
     }
+
+    if (centerEl) centerEl.style.display = 'block';
 
     console.log(`Drawing ${categories.length} categories for ${centerKey}`);
 
     const total = categories.reduce((sum, cat) => sum + cat.total, 0);
     let startAngle = -Math.PI / 2;
 
-    // Draw pie segments
-    categories.forEach((cat, index) => {
+    // Draw 3D effect shadow first (ellipse at bottom)
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + 8, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.fill();
+
+    // Draw pie segments with 3D gradient effect
+    categories.forEach((cat, idx) => {
         const sliceAngle = (cat.total / total) * 2 * Math.PI;
         const endAngle = startAngle + sliceAngle;
-        const color = expenseCategoryColors[index % expenseCategoryColors.length];
+        const color = expenseCategoryColors[idx % expenseCategoryColors.length];
 
         // Draw segment
         ctx.beginPath();
@@ -916,27 +992,65 @@ function drawCostCenterPieChart(centerKey) {
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.closePath();
 
-        // Create gradient
-        const gradient = ctx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, radius);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, shadeColor(color, -15));
+        // Create 3D gradient effect - lighter at top, darker at bottom
+        const gradient = ctx.createLinearGradient(0, centerY - radius, 0, centerY + radius);
+        gradient.addColorStop(0, lightenColor(color, 20));
+        gradient.addColorStop(0.5, color);
+        gradient.addColorStop(1, shadeColor(color, -25));
 
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Add segment border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = 1;
+        // Add segment border for separation
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
         ctx.stroke();
 
         startAngle = endAngle;
     });
 
-    // Draw inner circle (donut hole)
+    // Draw inner circle (donut hole) with gradient for 3D depth
+    const holeGradient = ctx.createRadialGradient(centerX, centerY - 5, 0, centerX, centerY, innerRadius);
+    holeGradient.addColorStop(0, '#FFFFFF');
+    holeGradient.addColorStop(0.7, '#FFF9E6');
+    holeGradient.addColorStop(1, '#F5EED6');
+
     ctx.beginPath();
     ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = '#FFF9E6';
+    ctx.fillStyle = holeGradient;
     ctx.fill();
+
+    // Add subtle inner shadow
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Update legend with category data
+    if (legendEl) {
+        legendEl.innerHTML = categories.map((cat, idx) => {
+            const color = expenseCategoryColors[idx % expenseCategoryColors.length];
+            const shortName = cat.name.length > 15 ? cat.name.substring(0, 15) + '...' : cat.name;
+            return `
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background: ${color};"></span>
+                    <span class="chart-legend-label" title="${cat.name}">${shortName}</span>
+                    <span class="chart-legend-value">₱${cat.total.toLocaleString('en-PH', { maximumFractionDigits: 0 })}</span>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+// Helper function to lighten colors
+function lightenColor(color, percent) {
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }
 
 // Setup chart initialization
