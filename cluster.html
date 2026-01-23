@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julie's Bakeshop - Cluster Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="cluster-styles.css">
+</head>
+<body>
+    <!-- Data Refresh Indicator -->
+    <div class="data-refresh-indicator" id="refresh-indicator">
+        <span class="loading-spinner"></span>
+        <span>Syncing data...</span>
+    </div>
+
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo">
+                    <span class="logo-icon">🥐</span>
+                    <div class="logo-text">
+                        <span class="logo-julies">JULIE'S</span>
+                        <span class="logo-bakeshop">BAKESHOP</span>
+                    </div>
+                </div>
+                <span class="sparkle">✦</span>
+            </div>
+            <div class="header-buttons">
+                <button class="back-btn" id="back-btn" title="Back to Dashboard">
+                    <svg class="back-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </button>
+                <button class="logout-btn" id="logout-btn" title="Back to Login">
+                    <svg class="logout-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+                <button class="refresh-btn" id="refresh-btn" title="Refresh Data">
+                    <svg class="refresh-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+            <div class="datetime-container">
+                <div class="time" id="current-time">10:55:29 AM</div>
+                <div class="date" id="current-date">Sunday, January 18, 2026</div>
+                <div class="cluster-badge" id="cluster-badge">
+                    <span class="cluster-badge-icon">📍</span>
+                    <span class="cluster-badge-text" id="cluster-name">Loading...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cluster Navigation -->
+        <div class="cluster-nav">
+            <a href="cluster.html?cluster=blumentrit" class="cluster-nav-item" data-cluster="blumentrit">
+                <span class="cluster-nav-icon">🏪</span>
+                <span>Blumentrit</span>
+            </a>
+            <a href="cluster.html?cluster=balicbalic" class="cluster-nav-item" data-cluster="balicbalic">
+                <span class="cluster-nav-icon">🏪</span>
+                <span>Balicbalic</span>
+            </a>
+            <a href="cluster.html?cluster=kalentong" class="cluster-nav-item" data-cluster="kalentong">
+                <span class="cluster-nav-icon">🏪</span>
+                <span>Kalentong</span>
+            </a>
+            <a href="cluster.html?cluster=paco" class="cluster-nav-item" data-cluster="paco">
+                <span class="cluster-nav-icon">🏪</span>
+                <span>Paco</span>
+            </a>
+        </div>
+
+        <!-- Greeting -->
+        <div class="greeting">
+            <h1><span class="greeting-name">Hello, Jeanvie!</span> <span id="cluster-greeting">PCF Dashboard</span></h1>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-label">Total Expenses</div>
+                <div class="stat-value" id="total-balance">₱0</div>
+                <div class="stat-change positive" id="balance-change">
+                    <span class="change-icon">✦</span>
+                    <span>Loading...</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Week</div>
+                <div class="stat-value" id="this-week">₱0</div>
+                <div class="stat-change positive" id="week-change">
+                    <span class="change-icon">✦</span>
+                    <span>Loading...</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Month</div>
+                <div class="stat-value" id="this-month">₱0</div>
+                <div class="stat-change positive" id="month-change">
+                    <span class="change-icon">✦</span>
+                    <span>Loading...</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Year</div>
+                <div class="stat-value large" id="this-year">₱0</div>
+                <div class="stat-change positive" id="year-change">
+                    <span class="change-icon">✦</span>
+                    <span>Loading...</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Recent Transactions -->
+            <div class="transactions-section">
+                <h2 class="section-title">Recent Transactions - <span id="section-cluster-name">Cluster</span></h2>
+                <div class="filter-tabs">
+                    <button class="filter-tab active">All</button>
+                    <button class="filter-tab">Supplies</button>
+                    <button class="filter-tab">Ingredients</button>
+                    <button class="view-all-btn" id="view-all-btn">View All</button>
+                </div>
+                <div class="transactions-table">
+                    <div class="table-header">
+                        <span>Date</span>
+                        <span>Category</span>
+                        <span>Expense Description</span>
+                        <span>Account Name</span>
+                        <span>Vendor</span>
+                        <span>Amount</span>
+                    </div>
+                    <div id="transactions-container">
+                        <div class="loading-message">Loading transactions...</div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="set-budget-btn">
+                        <span class="budget-icon">📁</span>
+                        Set Budget
+                    </button>
+                    <button class="add-pcf-btn" id="add-pcf-btn">
+                        <span class="pcf-icon">➕</span>
+                        Add PCF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="right-panel">
+                <!-- Expense Breakdown Chart -->
+                <div class="breakdown-section">
+                    <h2 class="section-title">Expense Breakdown</h2>
+                    <div class="breakdown-content-3d">
+                        <div class="pie-chart-3d-wrapper">
+                            <div class="pie-chart-labels" id="pie-chart-labels">
+                                <!-- Labels will be added by JavaScript -->
+                            </div>
+                            <div class="pie-chart-3d-container">
+                                <canvas id="donutChart" width="280" height="280"></canvas>
+                            </div>
+                        </div>
+                        <div class="breakdown-legend-3d" id="breakdown-legend">
+                            <!-- Legend will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cluster Summary -->
+                <div class="cluster-summary-section">
+                    <h2 class="section-title">Cluster Summary</h2>
+                    <div class="cluster-summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-icon">📦</div>
+                            <div class="summary-card-content">
+                                <div class="summary-card-value" id="total-transactions">0</div>
+                                <div class="summary-card-label">Total Transactions</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-icon">📊</div>
+                            <div class="summary-card-content">
+                                <div class="summary-card-value" id="avg-transaction">₱0</div>
+                                <div class="summary-card-label">Avg. Transaction</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-icon">🏆</div>
+                            <div class="summary-card-content">
+                                <div class="summary-card-value" id="top-category">-</div>
+                                <div class="summary-card-label">Top Category</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-icon">📅</div>
+                            <div class="summary-card-content">
+                                <div class="summary-card-value" id="last-update">-</div>
+                                <div class="summary-card-label">Last Update</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PCF Modal -->
+    <div class="modal-overlay" id="pcf-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">PCF</h2>
+                <p class="modal-subtitle" id="pcf-modal-subtitle">PCF DAILY</p>
+                <button class="modal-close" id="pcf-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="pcf-form">
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-input" id="pcf-date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Cluster</label>
+                        <input type="text" class="form-input" id="pcf-cluster" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Expense Description</label>
+                        <input type="text" class="form-input" id="pcf-expense-desc" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Cost Center</label>
+                        <select class="form-select" id="pcf-cost-center">
+                            <option value="">Select an option ...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Vendor</label>
+                        <input type="text" class="form-input" id="pcf-vendor" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">TIN#</label>
+                        <input type="text" class="form-input" id="pcf-tin" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">OR/SI#</label>
+                        <input type="text" class="form-input" id="pcf-or-si" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Amount with VAT</label>
+                        <input type="number" step="0.01" class="form-input" id="pcf-amount-vat" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ex-VAT</label>
+                        <input type="number" step="0.01" class="form-input" id="pcf-exvat" placeholder="">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Account Name</label>
+                        <select class="form-select" id="pcf-account-name">
+                            <option value="">Select an option ...</option>
+                            <option value="bakery-supplies-consumable">Bakery Supplies - Consumable Items / 6511000101</option>
+                            <option value="bakery-supplies-durable">Bakery Supplies - Durable Items / 6511000102</option>
+                            <option value="business-licenses">Business and Other Licenses / 7711000102</option>
+                            <option value="cleaning-supplies">Cleaning Supplies / 6221000104</option>
+                            <option value="cos-perishable">COS - Perishable Ingredients / 5111000102</option>
+                            <option value="donations">Donations & Contributions / 7811000101</option>
+                            <option value="equipment-maint">Equipment Maint and Repair / 6911000101</option>
+                            <option value="facility-maint">Facility Maint and Repair / 6211000102</option>
+                            <option value="insurance">Insurance Expenses / 7711000101</option>
+                            <option value="legal-fees">Legal Fees / 6311000105</option>
+                            <option value="local-transport">Local Transportation / 6311000105</option>
+                            <option value="furniture-maint">Maint and Repair - Furniture and Fixtures / 7211000102</option>
+                            <option value="medical-direct">Medical & Hospitalization Direct Labor / 5122000106</option>
+                            <option value="medical-indirect">Medical & Hospitalization Indirect Labor / 6121000106</option>
+                            <option value="meeting-expenses">Meeting Expenses / 7141000101</option>
+                            <option value="mobile-data">Mobile Data Connectivity / 7121000104</option>
+                            <option value="photocopying">Photocopying / 7111000102</option>
+                            <option value="printing">Printing / 7111000101</option>
+                            <option value="stationary">Stationary and Supplies / 7112000101</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">VAT</label>
+                        <input type="number" step="0.01" class="form-input" id="pcf-vat" placeholder="">
+                    </div>
+
+                    <button type="submit" class="form-submit-btn">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View All Transactions Modal -->
+    <div class="modal-overlay" id="transactions-modal">
+        <div class="modal-content transactions-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">All Transactions</h2>
+                <p class="modal-subtitle" id="transactions-modal-subtitle">Complete transaction history</p>
+                <button class="modal-close" id="transactions-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transactions-search-bar">
+                    <div class="search-input-wrapper">
+                        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" class="search-input" id="transaction-search" placeholder="Search transactions...">
+                    </div>
+                </div>
+                <div class="transactions-modal-table">
+                    <div class="transactions-modal-header">
+                        <span>Date</span>
+                        <span>Category</span>
+                        <span>Expense Description</span>
+                        <span>Account Name</span>
+                        <span>Vendor</span>
+                        <span>Amount</span>
+                    </div>
+                    <div class="transactions-modal-body" id="all-transactions-container">
+                        <div class="loading-message">Loading all transactions...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot -->
+    <div class="chatbot-container" id="chatbot">
+        <div class="chatbot-toggle" id="chatbot-toggle">
+            <img src="julies-logo.png" alt="Julie's Assistant" class="chatbot-avatar">
+            <span class="chatbot-badge">1</span>
+        </div>
+        <div class="chatbot-window" id="chatbot-window">
+            <div class="chatbot-header">
+                <img src="julies-logo.png" alt="Julie's" class="chatbot-header-avatar">
+                <div class="chatbot-header-info">
+                    <span class="chatbot-name">Julie's Assistant</span>
+                    <span class="chatbot-status">Online</span>
+                </div>
+                <button class="chatbot-close" id="chatbot-close">&times;</button>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages">
+                <div class="chat-message bot">
+                    <img src="julies-logo.png" alt="Julie's" class="message-avatar">
+                    <div class="message-content">
+                        <p>Hi Jeanvie! 👋 Welcome to Julie's Bakeshop! How can I help you today?</p>
+                        <span class="message-time">Just now</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chatbot-suggestions">
+                <button class="suggestion-btn" data-message="Check my balance">💰 Check Balance</button>
+                <button class="suggestion-btn" data-message="Show recent transactions">📋 Transactions</button>
+                <button class="suggestion-btn" data-message="Help with budget">📊 Budget Help</button>
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" class="chatbot-input" id="chatbot-input" placeholder="Type your message...">
+                <button class="chatbot-send" id="chatbot-send">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="cluster.js"></script>
+</body>
+</html>

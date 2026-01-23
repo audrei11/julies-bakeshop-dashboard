@@ -437,6 +437,17 @@ setupRefreshButton();
 // Setup logout button
 setupLogoutButton();
 
+// Setup cluster button
+function setupClusterButton() {
+    const clusterBtn = document.getElementById('blumentrit-cluster-btn');
+    if (clusterBtn) {
+        clusterBtn.addEventListener('click', () => {
+            window.location.href = 'cluster.html?cluster=blumentrit';
+        });
+    }
+}
+setupClusterButton();
+
 // 3D Pie Chart Colors (matching reference image)
 const pieChart3DColors = [
     '#1565C0', // Deep Blue
