@@ -437,16 +437,93 @@ setupRefreshButton();
 // Setup logout button
 setupLogoutButton();
 
-// Setup cluster button
-function setupClusterButton() {
-    const clusterBtn = document.getElementById('blumentrit-cluster-btn');
-    if (clusterBtn) {
-        clusterBtn.addEventListener('click', () => {
-            window.location.href = 'cluster.html?cluster=blumentrit';
-        });
+// Cluster Navigation Configuration
+// This configuration prepares for role-based access control
+const CLUSTER_ACCESS_CONFIG = {
+    blumentrit: {
+        name: 'Blumentrit',
+        displayName: 'PCF Blumentrit',
+        costCenterCode: '22348',
+        color: '#C41E3A',
+        // Role-based access control (to be implemented with authentication)
+        allowedRoles: ['admin', 'manager', 'blumentrit_user']
+    },
+    balicbalic: {
+        name: 'Balicbalic',
+        displayName: 'PCF Balicbalic',
+        costCenterCode: '22349',
+        color: '#1565C0',
+        allowedRoles: ['admin', 'manager', 'balicbalic_user']
+    },
+    kalentong: {
+        name: 'Kalentong',
+        displayName: 'PCF Kalentong',
+        costCenterCode: '22350',
+        color: '#43A047',
+        allowedRoles: ['admin', 'manager', 'kalentong_user']
+    },
+    paco: {
+        name: 'Paco',
+        displayName: 'PCF Paco',
+        costCenterCode: '22351',
+        color: '#FB8C00',
+        allowedRoles: ['admin', 'manager', 'paco_user']
     }
+};
+
+// Setup cluster navigation
+function setupClusterNavigation() {
+    const clusterNavBtns = document.querySelectorAll('.cluster-nav-btn');
+
+    clusterNavBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const cluster = btn.dataset.cluster;
+
+            // Future: Check role-based access here
+            // const userRole = getCurrentUserRole();
+            // if (!canAccessCluster(userRole, cluster)) {
+            //     e.preventDefault();
+            //     alert('You do not have permission to access this cluster.');
+            //     return;
+            // }
+
+            // Navigation is handled by href attribute
+            // This event listener is for future role-based access control
+        });
+    });
 }
-setupClusterButton();
+
+// Future function: Check if user can access cluster based on role
+function canAccessCluster(userRole, clusterKey) {
+    const config = CLUSTER_ACCESS_CONFIG[clusterKey];
+    if (!config) return false;
+    return config.allowedRoles.includes(userRole) || userRole === 'admin';
+}
+
+// Future function: Get current user role (placeholder for authentication integration)
+function getCurrentUserRole() {
+    // This would be replaced with actual authentication logic
+    // For now, return 'admin' to allow all access
+    return 'admin';
+}
+
+// Future function: Filter visible clusters based on user role
+function filterClustersByRole() {
+    const userRole = getCurrentUserRole();
+    const clusterNavBtns = document.querySelectorAll('.cluster-nav-btn');
+
+    clusterNavBtns.forEach(btn => {
+        const cluster = btn.dataset.cluster;
+        if (!canAccessCluster(userRole, cluster)) {
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = 'flex';
+        }
+    });
+}
+
+// Initialize cluster navigation
+setupClusterNavigation();
 
 // 3D Pie Chart Colors (matching reference image)
 const pieChart3DColors = [
