@@ -437,87 +437,191 @@ setupRefreshButton();
 // Setup logout button
 setupLogoutButton();
 
-// Draw Donut Chart
+// 3D Pie Chart Colors (matching reference image)
+const pieChart3DColors = [
+    '#1565C0', // Deep Blue
+    '#00ACC1', // Teal/Cyan
+    '#43A047', // Green
+    '#FDD835', // Yellow
+    '#FB8C00', // Orange
+    '#E53935'  // Red
+];
+
+// Draw 3D Pie Chart
 function drawDonutChart() {
     const canvas = document.getElementById('donutChart');
     const ctx = canvas.getContext('2d');
 
-    // High DPI support
+    // Fixed size for 3D chart
+    const chartSize = 280;
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const radius = Math.min(centerX, centerY) - 10;
-    const innerRadius = radius * 0.55;
+    canvas.width = chartSize * dpr;
+    canvas.height = chartSize * dpr;
+    canvas.style.width = chartSize + 'px';
+    canvas.style.height = chartSize + 'px';
+    ctx.scale(dpr, dpr);
+
+    const centerX = chartSize / 2;
+    const centerY = chartSize / 2;
+    const radius = (chartSize / 2) - 25;
 
     // Use actual data from sheet, or defaults if not loaded yet
     const data = chartCategories.length > 0
-        ? chartCategories.map(cat => ({ value: cat.value, color: cat.color }))
+        ? chartCategories.map((cat, idx) => ({
+            value: cat.value,
+            color: pieChart3DColors[idx % pieChart3DColors.length],
+            name: cat.name
+        }))
         : [
-            { value: 12000, color: '#F5A623' },
-            { value: 6500, color: '#E8721C' },
-            { value: 4000, color: '#D0021B' },
-            { value: 3000, color: '#8B0000' }
+            { value: 35, color: '#1565C0', name: 'Blumentrit' },
+            { value: 20, color: '#00ACC1', name: 'Deca' },
+            { value: 15, color: '#FB8C00', name: 'Walter' },
+            { value: 15, color: '#43A047', name: 'Gagalangin' },
+            { value: 15, color: '#FDD835', name: 'Fajardo' }
         ];
 
     const total = data.reduce((sum, item) => sum + item.value, 0);
     let startAngle = -Math.PI / 2;
 
-    // Draw segments with gradient and shadow
+    // Clear canvas
+    ctx.clearRect(0, 0, chartSize, chartSize);
+
+    // Draw 3D depth/shadow effect at bottom
+    const depthHeight = 15;
+    ctx.save();
+    for (let i = depthHeight; i > 0; i--) {
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY + i, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.03 * (depthHeight - i) / depthHeight})`;
+        ctx.fill();
+    }
+    ctx.restore();
+
+    // Store label positions for later
+    const labelPositions = [];
+
+    // Draw pie segments with 3D glossy effect
     data.forEach((item, index) => {
         const sliceAngle = (item.value / total) * 2 * Math.PI;
         const endAngle = startAngle + sliceAngle;
+        const midAngle = startAngle + sliceAngle / 2;
 
-        // Create gradient for each segment
-        const gradient = ctx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, radius);
-        gradient.addColorStop(0, item.color);
-        gradient.addColorStop(1, shadeColor(item.color, -20));
-
+        // Draw main segment
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.closePath();
 
-        // Add shadow
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        // Create glossy gradient (lighter at top, darker at bottom)
+        const gradient = ctx.createLinearGradient(
+            centerX, centerY - radius,
+            centerX, centerY + radius
+        );
+        gradient.addColorStop(0, lightenColor(item.color, 30));
+        gradient.addColorStop(0.3, lightenColor(item.color, 15));
+        gradient.addColorStop(0.5, item.color);
+        gradient.addColorStop(0.7, shadeColor(item.color, -10));
+        gradient.addColorStop(1, shadeColor(item.color, -25));
 
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Reset shadow
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
+        // Add white highlight arc at top of each segment for glossy effect
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 0.85, startAngle + 0.05, endAngle - 0.05);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = radius * 0.15;
+        ctx.stroke();
+
+        // Add segment border
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Calculate label position
+        const labelRadius = radius + 35;
+        const labelX = centerX + Math.cos(midAngle) * labelRadius;
+        const labelY = centerY + Math.sin(midAngle) * labelRadius;
+        const percentage = Math.round((item.value / total) * 100);
+
+        labelPositions.push({
+            x: labelX,
+            y: labelY,
+            name: item.name,
+            percentage: percentage,
+            color: item.color,
+            midAngle: midAngle
+        });
 
         startAngle = endAngle;
     });
 
-    // Draw inner circle (donut hole)
-    const holeGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, innerRadius);
-    holeGradient.addColorStop(0, '#FFFFFF');
-    holeGradient.addColorStop(1, '#F8F8F8');
+    // Add center highlight for 3D depth
+    const centerGradient = ctx.createRadialGradient(
+        centerX - radius * 0.2, centerY - radius * 0.2, 0,
+        centerX, centerY, radius * 0.4
+    );
+    centerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+    centerGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = holeGradient;
+    ctx.arc(centerX, centerY, radius * 0.4, 0, 2 * Math.PI);
+    ctx.fillStyle = centerGradient;
     ctx.fill();
 
-    // Add subtle inner shadow
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    // Update labels container
+    updatePieChartLabels(labelPositions, chartSize);
+
+    // Update legend
+    updateBreakdownLegend(data, total);
+}
+
+// Update pie chart labels around the chart
+function updatePieChartLabels(positions, chartSize) {
+    const labelsContainer = document.getElementById('pie-chart-labels');
+    if (!labelsContainer) return;
+
+    const wrapperOffset = (320 - chartSize) / 2; // Center offset
+
+    labelsContainer.innerHTML = positions.map(pos => {
+        // Adjust position based on angle
+        let adjustedX = pos.x + wrapperOffset;
+        let adjustedY = pos.y + wrapperOffset;
+
+        // Determine text alignment based on position
+        const isRight = pos.midAngle > -Math.PI / 2 && pos.midAngle < Math.PI / 2;
+        const textAlign = isRight ? 'left' : 'right';
+        const xOffset = isRight ? 5 : -5;
+
+        return `
+            <div class="pie-label" style="left: ${adjustedX + xOffset}px; top: ${adjustedY}px; text-align: ${textAlign}; transform: translate(${isRight ? '0' : '-100%'}, -50%);">
+                <span class="pie-label-name" style="color: ${pos.color};">${pos.name.split(' ')[0].toUpperCase()}</span>
+                <span class="pie-label-value">${pos.percentage}%</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Update breakdown legend
+function updateBreakdownLegend(data, total) {
+    const legendContainer = document.getElementById('breakdown-legend');
+    if (!legendContainer) return;
+
+    legendContainer.innerHTML = data.map(item => {
+        const percentage = Math.round((item.value / total) * 100);
+        return `
+            <div class="legend-item">
+                <span class="legend-color" style="background: linear-gradient(135deg, ${lightenColor(item.color, 20)}, ${item.color});"></span>
+                <span class="legend-label">${item.name ? item.name.split(' ')[0] : 'Unknown'}</span>
+                <span class="legend-value">${percentage}%</span>
+            </div>
+        `;
+    }).join('');
 }
 
 // Helper function to shade colors
@@ -666,34 +770,22 @@ function calculateCostCenterTotals() {
 function updateBreakdownWithCostCenters() {
     // Sort cost centers by total expense (highest first)
     const sortedCenters = Object.entries(costCenterData)
-        .map(([key, data]) => ({
+        .map(([key, data], idx) => ({
             key,
             name: costCenterNames[key],
             total: data.total,
-            color: costCenterColors[key]
+            color: pieChart3DColors[idx % pieChart3DColors.length]
         }))
         .sort((a, b) => b.total - a.total);
 
-    // Update chart categories for donut chart
-    chartCategories = sortedCenters.map(center => ({
+    // Update chart categories for 3D donut chart
+    chartCategories = sortedCenters.map((center, idx) => ({
         name: center.name,
         value: center.total,
-        color: center.color
+        color: pieChart3DColors[idx % pieChart3DColors.length]
     }));
 
-    // Update legend
-    const legendContainer = document.getElementById('breakdown-legend');
-    if (legendContainer) {
-        legendContainer.innerHTML = sortedCenters.map(center => `
-            <div class="legend-item">
-                <span class="legend-color" style="background: ${center.color};"></span>
-                <span class="legend-value">₱${center.total.toLocaleString('en-PH')}</span>
-                <span class="legend-label">${center.name.split(' ')[0]}</span>
-            </div>
-        `).join('');
-    }
-
-    // Redraw donut chart
+    // Redraw 3D donut chart (legend is updated inside drawDonutChart)
     drawDonutChart();
 }
 

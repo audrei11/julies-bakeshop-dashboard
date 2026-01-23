@@ -140,11 +140,16 @@
                 <!-- Main Cost Center Breakdown Chart -->
                 <div class="breakdown-section">
                     <h2 class="section-title">Cost Center Breakdown</h2>
-                    <div class="breakdown-content">
-                        <div class="donut-chart-container">
-                            <canvas id="donutChart" width="180" height="180"></canvas>
+                    <div class="breakdown-content-3d">
+                        <div class="pie-chart-3d-wrapper">
+                            <div class="pie-chart-labels" id="pie-chart-labels">
+                                <!-- Labels will be added by JavaScript -->
+                            </div>
+                            <div class="pie-chart-3d-container">
+                                <canvas id="donutChart" width="280" height="280"></canvas>
+                            </div>
                         </div>
-                        <div class="breakdown-legend" id="breakdown-legend">
+                        <div class="breakdown-legend-3d" id="breakdown-legend">
                             <!-- Legend will be populated by JavaScript -->
                         </div>
                     </div>
