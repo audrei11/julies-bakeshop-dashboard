@@ -177,6 +177,38 @@ body {
     font-weight: 500;
 }
 
+/* Cluster Button */
+.cluster-btn {
+    margin-top: 10px;
+    background: linear-gradient(135deg, #C41E3A 0%, #8B0000 100%);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+    transition: all 0.3s ease;
+}
+
+.cluster-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(196, 30, 58, 0.4);
+}
+
+.cluster-btn:active {
+    transform: translateY(0);
+}
+
+.cluster-btn-icon {
+    font-size: 14px;
+}
+
 /* Greeting */
 .greeting {
     text-align: center;
