@@ -441,6 +441,14 @@
         </div>
     </div>
 
+    <script src="auth.js?v=3"></script>
+    <script>
+        // Protect dashboard - only admin can access
+        if (JuliesAuth.protectDashboard()) {
+            JuliesAuth.updateGreeting();
+        }
+        // If false, redirect already happened
+    </script>
     <script src="script.js"></script>
 </body>
 </html>

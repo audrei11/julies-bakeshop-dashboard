@@ -25,8 +25,12 @@ const CLUSTER_CONFIG = {
     paco: {
         name: 'Paco',
         displayName: 'PCF Paco',
-        costCenterCode: '22351',
-        costCenterName: 'Jbs 22351 paco',
+        costCenterCode: '23252',
+        costCenterName: 'Jbs 23252 Paco',
+        costCenters: [
+            { code: '23252', name: 'Jbs 23252 Paco' },
+            { code: '24711', name: 'Jbs 24711 SM Manila' }
+        ],
         color: '#FB8C00'
     },
     deca: {
@@ -71,9 +75,34 @@ const currentClusterKey = getCurrentCluster();
 const currentCluster = CLUSTER_CONFIG[currentClusterKey];
 
 // ==================== GOOGLE SHEETS INTEGRATION ====================
-const SHEET_ID = '1Iw76w4c0Jp8xwSj1UgukZlkFRGOclkvJk9TeaZzuiw0';
+// Cluster-specific Google Sheet IDs
+const CLUSTER_SHEETS = {
+    balicbalic: '1Ssha1noo1nSpDdOr9hOmq3FDmF_cOZur3XMqrvNZTqI',
+    paco: '1AHW0frOcBk1JUF7MdVpazdHQBUgKFXM0I-JBUKsmCNY'
+};
+
+// Cluster-specific webhook URLs for form submission
+const CLUSTER_WEBHOOKS = {
+    paco: 'https://n8n.srv868353.hstgr.cloud/webhook/dd11259d-c7a0-437d-8660-b25950f04a6e'
+};
+
+// Default sheet for other clusters (dummy/existing data)
+const DEFAULT_SHEET_ID = '1Iw76w4c0Jp8xwSj1UgukZlkFRGOclkvJk9TeaZzuiw0';
+
+// Get sheet ID for current cluster (fallback to default)
+const SHEET_ID = CLUSTER_SHEETS[currentClusterKey] || DEFAULT_SHEET_ID;
 const SHEET_NAME = 'Sheet1';
 const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+// DEBUG: Log cluster and sheet configuration
+console.log('========== CLUSTER DATA SOURCE ==========');
+console.log('Selected Cluster:', currentClusterKey);
+console.log('Cluster Config:', currentCluster);
+console.log('Resolved Sheet ID:', SHEET_ID);
+console.log('Has Dedicated Sheet?:', CLUSTER_SHEETS.hasOwnProperty(currentClusterKey));
+console.log('Webhook URL:', CLUSTER_WEBHOOKS[currentClusterKey] || 'None');
+console.log('Sheet URL:', SHEET_BASE_URL);
+console.log('==========================================');
 
 // Store fetched data
 let sheetData = [];
@@ -115,6 +144,13 @@ async function fetchSheetData() {
             return rowData;
         });
 
+        // DEBUG: Log fetched data
+        console.log('========== SHEET DATA FETCHED ==========');
+        console.log('Column Headers:', headers);
+        console.log('Total Rows from Sheet:', sheetData.length);
+        console.log('First Row Sample:', sheetData[0]);
+        console.log('=========================================');
+
         // Filter data for current cluster
         filterClusterData();
 
@@ -145,17 +181,37 @@ async function fetchSheetData() {
 
 // Filter data for current cluster
 function filterClusterData() {
-    clusterData = sheetData.filter(row => {
-        const costCenterStr = (row['Cost center'] || row['cost center'] || row['Cost Center'] || '').toLowerCase();
-        const clusterStr = (row['Cluster'] || row['cluster'] || '').toLowerCase();
+    const clusterName = currentCluster.name.toLowerCase();
+    const nameVariations = [clusterName, clusterName.replace('-', ''), clusterName.split('-')[0]];
+    const hasDedicatedSheet = CLUSTER_SHEETS.hasOwnProperty(currentClusterKey);
 
-        // Match by cost center code or cluster name
-        return costCenterStr.includes(currentCluster.costCenterCode) ||
-               costCenterStr.includes(currentCluster.name.toLowerCase()) ||
-               clusterStr.includes(currentCluster.name.toLowerCase());
-    });
+    console.log('========== FILTERING DATA ==========');
+    console.log('Looking for cluster:', clusterName);
+    console.log('Has dedicated sheet?:', hasDedicatedSheet);
+    console.log('Name variations:', nameVariations);
+    console.log('Cost center code:', currentCluster.costCenterCode);
 
-    console.log(`Filtered ${clusterData.length} transactions for ${currentCluster.name}`);
+    // If cluster has dedicated sheet, use ALL data from that sheet
+    if (hasDedicatedSheet) {
+        console.log('Using ALL data from dedicated sheet (no filtering)');
+        clusterData = [...sheetData];
+    } else {
+        // Filter shared sheet data by cluster name/code
+        clusterData = sheetData.filter(row => {
+            const costCenterStr = (row['Cost center'] || row['cost center'] || row['Cost Center'] || '').toLowerCase();
+            const clusterStr = (row['Cluster'] || row['cluster'] || '').toLowerCase();
+
+            return costCenterStr.includes(currentCluster.costCenterCode) ||
+                   nameVariations.some(name => costCenterStr.includes(name)) ||
+                   nameVariations.some(name => clusterStr.includes(name));
+        });
+    }
+
+    console.log('Final rows for', currentCluster.name + ':', clusterData.length);
+    if (clusterData.length > 0) {
+        console.log('Sample row:', clusterData[0]);
+    }
+    console.log('=====================================');
 }
 
 // Update dashboard with cluster data
@@ -267,7 +323,7 @@ function updateStatCards(stats) {
 // Update transactions table
 function updateTransactionsTable(data) {
     const container = document.getElementById('transactions-container');
-    const recentTransactions = data.slice(-10).reverse();
+    const recentTransactions = data.slice(-5).reverse();
 
     if (recentTransactions.length === 0) {
         container.innerHTML = '<div class="loading-message">No transactions to display</div>';
@@ -280,7 +336,7 @@ function updateTransactionsTable(data) {
         const date = row['Date'] || row['date'] || '';
         const expenseDesc = row['Expense description'] || row['Expense Description'] || '';
         const accountName = row['Account Name'] || row['Account name'] || '';
-        const vendor = row['vendor name'] || row['Vendor'] || '';
+        const vendor = row['Vendor Name'] || row['vendor name'] || row['Vendor'] || '';
         const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
         const category = getExpenseCategory(accountName);
 
@@ -571,12 +627,24 @@ function shadeColor(color, percent) {
 
 // Update page with cluster info
 function initializeClusterUI() {
-    // Update cluster name displays
-    document.getElementById('cluster-name').textContent = currentCluster.displayName;
-    document.getElementById('cluster-greeting').textContent = currentCluster.displayName;
-    document.getElementById('section-cluster-name').textContent = currentCluster.name;
-    document.getElementById('pcf-modal-subtitle').textContent = `PCF DAILY ${currentCluster.name.toUpperCase()}`;
-    document.getElementById('transactions-modal-subtitle').textContent = `Transaction history for ${currentCluster.name}`;
+    // Safety check - don't run if cluster config not loaded
+    if (!currentCluster) return;
+
+    // Update cluster name displays (with null checks)
+    const clusterNameEl = document.getElementById('cluster-name');
+    if (clusterNameEl) clusterNameEl.textContent = currentCluster.displayName;
+
+    const clusterGreetingEl = document.getElementById('cluster-greeting');
+    if (clusterGreetingEl) clusterGreetingEl.textContent = currentCluster.displayName;
+
+    const sectionClusterNameEl = document.getElementById('section-cluster-name');
+    if (sectionClusterNameEl) sectionClusterNameEl.textContent = currentCluster.name;
+
+    const pcfModalSubtitleEl = document.getElementById('pcf-modal-subtitle');
+    if (pcfModalSubtitleEl) pcfModalSubtitleEl.textContent = `PCF DAILY ${currentCluster.name.toUpperCase()}`;
+
+    const transactionsModalSubtitleEl = document.getElementById('transactions-modal-subtitle');
+    if (transactionsModalSubtitleEl) transactionsModalSubtitleEl.textContent = `Transaction history for ${currentCluster.name}`;
 
     // Set page title
     document.title = `Julie's Bakeshop - ${currentCluster.displayName}`;
@@ -603,10 +671,22 @@ function initializeClusterUI() {
     // Populate cost center dropdown
     const costCenterSelect = document.getElementById('pcf-cost-center');
     if (costCenterSelect) {
-        costCenterSelect.innerHTML = `
-            <option value="">Select an option ...</option>
-            <option value="${currentClusterKey}" selected>${currentCluster.costCenterName}</option>
-        `;
+        // Check if cluster has multiple cost centers
+        if (currentCluster.costCenters && currentCluster.costCenters.length > 0) {
+            const options = currentCluster.costCenters.map(cc =>
+                `<option value="${cc.code}">${cc.name}</option>`
+            ).join('');
+            costCenterSelect.innerHTML = `
+                <option value="">Select an option ...</option>
+                ${options}
+            `;
+        } else {
+            // Single cost center
+            costCenterSelect.innerHTML = `
+                <option value="">Select an option ...</option>
+                <option value="${currentCluster.costCenterCode}" selected>${currentCluster.costCenterName}</option>
+            `;
+        }
     }
 }
 
@@ -625,8 +705,11 @@ function updateDateTime() {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const dateString = now.toLocaleDateString('en-US', options);
 
-    document.getElementById('current-time').textContent = timeString;
-    document.getElementById('current-date').textContent = dateString;
+    const timeEl = document.getElementById('current-time');
+    if (timeEl) timeEl.textContent = timeString;
+
+    const dateEl = document.getElementById('current-date');
+    if (dateEl) dateEl.textContent = dateString;
 }
 
 // ==================== EVENT HANDLERS ====================
@@ -650,7 +733,13 @@ function setupBackButton() {
     const backBtn = document.getElementById('back-btn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
-            window.location.href = 'index.html';
+            // Only admins can go back to main dashboard
+            if (window.JuliesAuth && JuliesAuth.isAdmin()) {
+                window.location.href = 'index.html';
+            } else {
+                // Non-admin users stay on their cluster or go to login
+                window.location.href = 'login.html';
+            }
         });
     }
 }
@@ -660,7 +749,11 @@ function setupLogoutButton() {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            window.location.href = 'login.html';
+            if (window.JuliesAuth) {
+                JuliesAuth.logout();
+            } else {
+                window.location.href = 'login.html';
+            }
         });
     }
 }
@@ -691,11 +784,80 @@ if (addPcfBtn && pcfModal) {
         }
     });
 
-    pcfForm.addEventListener('submit', (e) => {
+    pcfForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        alert('PCF Entry submitted successfully!');
-        pcfForm.reset();
-        document.getElementById('pcf-cluster').value = currentCluster.name;
+
+        // Collect form data
+        const dateInput = document.getElementById('pcf-date').value;
+        const dateParts = dateInput.split('-'); // yyyy-mm-dd
+        const formattedDate = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`; // mm/dd/yyyy
+
+        const costCenterSelect = document.getElementById('pcf-cost-center');
+        const costCenterText = costCenterSelect.options[costCenterSelect.selectedIndex]?.text || '';
+
+        const accountNameSelect = document.getElementById('pcf-account-name');
+        const accountNameText = accountNameSelect.options[accountNameSelect.selectedIndex]?.text || '';
+
+        const formData = {
+            submittedAt: new Date().toISOString(),
+            date: formattedDate,
+            cluster: document.getElementById('pcf-cluster').value.toLowerCase(),
+            expense_description: document.getElementById('pcf-expense-desc').value,
+            cost_center: costCenterText,
+            vendor: document.getElementById('pcf-vendor').value,
+            tin: document.getElementById('pcf-tin').value,
+            or_si: document.getElementById('pcf-or-si').value,
+            amount_with_vat: parseFloat(document.getElementById('pcf-amount-vat').value) || 0,
+            ex_vat: parseFloat(document.getElementById('pcf-exvat').value) || 0,
+            account_name: accountNameText,
+            vat: parseFloat(document.getElementById('pcf-vat').value) || 0
+        };
+
+        // Check if cluster has webhook configured
+        const webhookUrl = CLUSTER_WEBHOOKS[currentClusterKey];
+
+        if (webhookUrl) {
+            // Submit to webhook
+            const submitBtn = pcfForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Submitting...';
+            submitBtn.disabled = true;
+
+            try {
+                console.log('Submitting to webhook:', webhookUrl);
+                console.log('Form data:', formData);
+
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('PCF Entry submitted successfully!');
+                    pcfForm.reset();
+                    document.getElementById('pcf-cluster').value = currentCluster.name;
+                    // Refresh data after successful submission
+                    fetchSheetData();
+                } else {
+                    alert('Error submitting entry. Please try again.');
+                }
+            } catch (error) {
+                console.error('Webhook error:', error);
+                alert('Error submitting entry: ' + error.message);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        } else {
+            // No webhook - just show success (for other clusters)
+            alert('PCF Entry submitted successfully!');
+            pcfForm.reset();
+            document.getElementById('pcf-cluster').value = currentCluster.name;
+        }
+
         pcfModal.classList.remove('active');
         document.body.style.overflow = '';
     });
@@ -766,7 +928,7 @@ function displayAllTransactions() {
         const date = row['Date'] || row['date'] || '';
         const expenseDesc = row['Expense description'] || row['Expense Description'] || '';
         const accountName = row['Account Name'] || row['Account name'] || '';
-        const vendor = row['vendor name'] || row['Vendor'] || '';
+        const vendor = row['Vendor Name'] || row['vendor name'] || row['Vendor'] || '';
         const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
         const category = getExpenseCategory(accountName);
 
@@ -936,23 +1098,36 @@ suggestionBtns.forEach(btn => {
 
 // ==================== INITIALIZATION ====================
 
-// Initialize on load
-window.addEventListener('load', () => {
-    initializeClusterUI();
-    drawDonutChart();
-    fetchSheetData();
-});
+// Only initialize if we're on the cluster page (check for key element)
+function initClusterPage() {
+    // Check if we're on cluster.html by looking for a unique element
+    const clusterBadge = document.getElementById('cluster-badge');
+    if (!clusterBadge) {
+        // Not on cluster page, don't initialize
+        return;
+    }
 
-// Setup event handlers
-setupRefreshButton();
-setupBackButton();
-setupLogoutButton();
+    // Initialize on load
+    window.addEventListener('load', () => {
+        initializeClusterUI();
+        drawDonutChart();
+        fetchSheetData();
+    });
 
-// Update time every second
-setInterval(updateDateTime, 1000);
-updateDateTime();
+    // Setup event handlers
+    setupRefreshButton();
+    setupBackButton();
+    setupLogoutButton();
 
-// Redraw chart on resize
-window.addEventListener('resize', () => {
-    drawDonutChart();
-});
+    // Update time every second
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Redraw chart on resize
+    window.addEventListener('resize', () => {
+        drawDonutChart();
+    });
+}
+
+// Run initialization
+initClusterPage();

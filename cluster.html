@@ -392,6 +392,39 @@
         </div>
     </div>
 
+    <script src="auth.js?v=3"></script>
+    <script>
+        // Get cluster from URL or session
+        var urlParams = new URLSearchParams(window.location.search);
+        var clusterParam = urlParams.get('cluster');
+        var session = JuliesAuth.getSession();
+
+        // If no cluster in URL but user is logged in, use their cluster
+        if (!clusterParam && session) {
+            if (session.role === 'admin') {
+                // Admin without cluster param - default to blumentrit
+                clusterParam = 'blumentrit';
+            } else {
+                // Cluster user - use their assigned cluster
+                clusterParam = session.cluster;
+            }
+            // Update URL to include cluster
+            window.history.replaceState({}, '', 'cluster.html?cluster=' + clusterParam);
+        }
+
+        // Still no cluster and no session = go to login
+        if (!clusterParam) {
+            window.location.href = 'login.html';
+        } else {
+            // Check access
+            if (JuliesAuth.protectClusterPage(clusterParam)) {
+                // Access OK - setup UI
+                JuliesAuth.updateGreeting();
+                JuliesAuth.hideClusterNav();
+            }
+            // If false, redirect already happened
+        }
+    </script>
     <script src="cluster.js"></script>
 </body>
 </html>

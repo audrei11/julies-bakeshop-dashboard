@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Julie's Bakeshop - Financial Dashboard</title>
+    <title>Julie's Bakeshop - Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,7 +11,6 @@
 </head>
 <body>
     <div class="login-container">
-        <!-- Header -->
         <header class="login-header">
             <div class="logo-container">
                 <div class="logo">
@@ -23,18 +22,16 @@
                 </div>
             </div>
             <div class="datetime-container">
-                <div class="time" id="current-time">12:35:29 PM</div>
-                <div class="date" id="current-date">Sunday, January 18, 2026</div>
+                <div class="time" id="current-time">12:00:00 PM</div>
+                <div class="date" id="current-date">Loading...</div>
             </div>
         </header>
 
-        <!-- Sparkles -->
         <div class="sparkle sparkle-1">✦</div>
         <div class="sparkle sparkle-2">✦</div>
         <div class="sparkle sparkle-3">✦</div>
         <div class="sparkle sparkle-4">✦</div>
 
-        <!-- Main Content -->
         <main class="login-main">
             <div class="logo-image-container">
                 <img src="julies-logo.png" alt="Julie's Bakeshop" class="logo-image">
@@ -42,47 +39,83 @@
 
             <h1 class="welcome-title">Welcome to Julie's Bakeshop</h1>
 
-            <button class="login-btn" id="login-btn">
-                Proceed to Dashboard
-            </button>
+            <form class="login-form" id="loginForm">
+                <div class="login-error" id="errorMsg"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="emailInput" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="passwordInput" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">Login</button>
+            </form>
         </main>
 
-        <!-- Footer Wave -->
-        <div class="footer-wave">
-            <div class="wave-cube"></div>
-        </div>
+        <div class="footer-wave"></div>
     </div>
 
+    <script src="auth.js?v=3"></script>
     <script>
-        // Update time and date
-        function updateDateTime() {
-            const now = new Date();
+        // Clock
+        function updateClock() {
+            var now = new Date();
+            var h = now.getHours();
+            var m = now.getMinutes().toString().padStart(2, '0');
+            var s = now.getSeconds().toString().padStart(2, '0');
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
 
-            // Format time
-            let hours = now.getHours();
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const seconds = now.getSeconds().toString().padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
-
-            // Format date
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const dateString = now.toLocaleDateString('en-US', options);
-
-            document.getElementById('current-time').textContent = timeString;
-            document.getElementById('current-date').textContent = dateString;
+            document.getElementById('current-time').textContent = h + ':' + m + ':' + s + ' ' + ampm;
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
         }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-        // Update every second
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
+        // CLEAR ANY OLD SESSION ON LOGIN PAGE LOAD
+        JuliesAuth.clearSession();
 
-        // Login button click
-        document.getElementById('login-btn').addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
+        // Focus email
+        document.getElementById('emailInput').focus();
+
+        // Handle form submit
+        document.getElementById('loginForm').onsubmit = function(e) {
+            e.preventDefault();
+
+            var email = document.getElementById('emailInput').value;
+            var password = document.getElementById('passwordInput').value;
+            var errorMsg = document.getElementById('errorMsg');
+            var loginBtn = document.getElementById('loginBtn');
+
+            // Hide error
+            errorMsg.style.display = 'none';
+
+            // Disable button
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+
+            // Try login
+            setTimeout(function() {
+                var user = JuliesAuth.login(email, password);
+
+                if (user) {
+                    // SUCCESS - redirect based on role
+                    window.location.href = JuliesAuth.getRedirectUrl(user);
+                } else {
+                    // FAILED
+                    errorMsg.textContent = 'Invalid email or password';
+                    errorMsg.style.display = 'block';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Login';
+                }
+            }, 300);
+        };
     </script>
 </body>
 </html>
