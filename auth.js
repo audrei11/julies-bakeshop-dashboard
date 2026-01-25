@@ -11,12 +11,18 @@ const USERS = {
     'paco@julies.com': { password: 'paco5316', role: 'cluster', cluster: 'paco', name: 'Paco Manager' }
 };
 
-// Get session from localStorage
+// Get session from localStorage - STRICT validation
 function getSession() {
     try {
         var data = localStorage.getItem('julies_session');
         if (data) {
-            return JSON.parse(data);
+            var session = JSON.parse(data);
+            // STRICT CHECK: Must have email and role to be valid
+            if (!session || !session.email || !session.role) {
+                localStorage.removeItem('julies_session');
+                return null;
+            }
+            return session;
         }
     } catch (e) {
         localStorage.removeItem('julies_session');

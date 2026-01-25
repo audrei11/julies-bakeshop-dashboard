@@ -18,8 +18,14 @@ const CLUSTER_CONFIG = {
     kalentong: {
         name: 'Kalentong',
         displayName: 'PCF Kalentong',
-        costCenterCode: '22350',
-        costCenterName: 'Jbs 22350 kalentong',
+        costCenterCode: '23326',
+        costCenterName: 'Jbs 23326 Kalentong',
+        costCenters: [
+            { code: '23326', name: 'Jbs 23326 Kalentong' },
+            { code: '23757', name: 'Jbs 23757 SM Megamall' },
+            { code: '23605', name: 'Jbs 23605 SM Hypermarket Mandaluyong' },
+            { code: '23745', name: 'Jbs 23745 SM Cherry Shaw' }
+        ],
         color: '#43A047'
     },
     paco: {
@@ -78,12 +84,14 @@ const currentCluster = CLUSTER_CONFIG[currentClusterKey];
 // Cluster-specific Google Sheet IDs
 const CLUSTER_SHEETS = {
     balicbalic: '1Ssha1noo1nSpDdOr9hOmq3FDmF_cOZur3XMqrvNZTqI',
-    paco: '1AHW0frOcBk1JUF7MdVpazdHQBUgKFXM0I-JBUKsmCNY'
+    paco: '1AHW0frOcBk1JUF7MdVpazdHQBUgKFXM0I-JBUKsmCNY',
+    kalentong: '1FXWoiZEehsHpfY-fa1S5nufWKgN-4gnFXpqguRSZMN8'
 };
 
 // Cluster-specific webhook URLs for form submission
 const CLUSTER_WEBHOOKS = {
-    paco: 'https://n8n.srv868353.hstgr.cloud/webhook/dd11259d-c7a0-437d-8660-b25950f04a6e'
+    paco: 'https://n8n.srv868353.hstgr.cloud/webhook/dd11259d-c7a0-437d-8660-b25950f04a6e',
+    kalentong: 'https://n8n.srv868353.hstgr.cloud/webhook/74c91f03-a3a6-469d-9fad-944d44ba5874'
 };
 
 // Default sheet for other clusters (dummy/existing data)

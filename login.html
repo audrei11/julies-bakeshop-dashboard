@@ -59,7 +59,7 @@
         <div class="footer-wave"></div>
     </div>
 
-    <script src="auth.js?v=3"></script>
+    <script src="auth.js?v=4"></script>
     <script>
         // Clock
         function updateClock() {
@@ -78,8 +78,11 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // CLEAR ANY OLD SESSION ON LOGIN PAGE LOAD
+        // CLEAR ANY OLD SESSION ON LOGIN PAGE LOAD - NO AUTO REDIRECT
         JuliesAuth.clearSession();
+
+        // Double-check: Remove any stale session data
+        localStorage.removeItem('julies_session');
 
         // Focus email
         document.getElementById('emailInput').focus();

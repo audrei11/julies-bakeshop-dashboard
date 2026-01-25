@@ -392,7 +392,7 @@
         </div>
     </div>
 
-    <script src="auth.js?v=3"></script>
+    <script src="auth.js?v=4"></script>
     <script>
         // Get cluster from URL or session
         var urlParams = new URLSearchParams(window.location.search);
@@ -402,14 +402,14 @@
         // If no cluster in URL but user is logged in, use their cluster
         if (!clusterParam && session) {
             if (session.role === 'admin') {
-                // Admin without cluster param - default to blumentrit
-                clusterParam = 'blumentrit';
+                // Admin without cluster param - redirect to main dashboard
+                window.location.href = 'index.html';
             } else {
                 // Cluster user - use their assigned cluster
                 clusterParam = session.cluster;
+                // Update URL to include cluster
+                window.history.replaceState({}, '', 'cluster.html?cluster=' + clusterParam);
             }
-            // Update URL to include cluster
-            window.history.replaceState({}, '', 'cluster.html?cluster=' + clusterParam);
         }
 
         // Still no cluster and no session = go to login
@@ -425,6 +425,6 @@
             // If false, redirect already happened
         }
     </script>
-    <script src="cluster.js"></script>
+    <script src="cluster.js?v=3"></script>
 </body>
 </html>
