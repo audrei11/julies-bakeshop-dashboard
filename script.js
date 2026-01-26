@@ -1,75 +1,140 @@
 // ==================== GOOGLE SHEETS INTEGRATION ====================
-// Google Sheets Configuration
-const SHEET_ID = '1Iw76w4c0Jp8xwSj1UgukZlkFRGOclkvJk9TeaZzuiw0';
-const SHEET_NAME = 'Sheet1'; // Change if your sheet has a different name
-const API_KEY = ''; // Optional: Add your Google API key for higher limits
+// Cluster-specific Google Sheet IDs
+const CLUSTER_SHEETS = {
+    blumentrit: '1Iw76w4c0Jp8xwSj1UgukZlkFRGOclkvJk9TeaZzuiw0',  // Default/shared sheet
+    balicbalic: '1Ssha1noo1nSpDdOr9hOmq3FDmF_cOZur3XMqrvNZTqI',
+    paco: '1AHW0frOcBk1JUF7MdVpazdHQBUgKFXM0I-JBUKsmCNY',
+    kalentong: '1FXWoiZEehsHpfY-fa1S5nufWKgN-4gnFXpqguRSZMN8'
+};
 
-// Construct the Google Sheets URL (using CSV export for public sheets)
-// Note: We'll add a cache-buster parameter when fetching
-const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+// Cluster display names and colors
+const CLUSTER_CONFIG = {
+    blumentrit: { name: 'Blumentrit', color: '#C41E3A' },
+    balicbalic: { name: 'Balicbalic', color: '#1565C0' },
+    kalentong: { name: 'Kalentong', color: '#43A047' },
+    paco: { name: 'Paco', color: '#FB8C00' }
+};
 
-// Manual refresh only - no automatic syncing
+const SHEET_NAME = 'Sheet1';
 
 // Store fetched data globally
 let sheetData = [];
+let allClusterData = {};  // Stores data per cluster
+let clusterTotals = {};   // Stores totals per cluster
 let lastFetchTime = null;
 
-// Fetch data from Google Sheets
+// Fetch data from a single Google Sheet
+async function fetchSingleSheet(sheetId) {
+    const cacheBuster = new Date().getTime();
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&_cb=${cacheBuster}`;
+
+    const response = await fetch(url);
+    const text = await response.text();
+
+    // Parse the JSONP response
+    const jsonString = text.substring(47, text.length - 2);
+    const data = JSON.parse(jsonString);
+
+    const rows = data.table.rows;
+    const cols = data.table.cols;
+
+    const headers = cols.map((col, idx) => col.label || col.id || `col${idx}`);
+
+    return rows.map(row => {
+        const rowData = {};
+        row.c.forEach((cell, index) => {
+            const header = headers[index] || `col${index}`;
+            rowData[header] = cell ? (cell.v !== null ? cell.v : '') : '';
+            if (cell && cell.f) {
+                rowData[header + '_formatted'] = cell.f;
+            }
+        });
+        return rowData;
+    });
+}
+
+// Fetch data from ALL cluster sheets
 async function fetchSheetData() {
     const refreshIndicator = document.getElementById('refresh-indicator');
 
     try {
-        // Show refresh indicator
         if (lastFetchTime) {
             refreshIndicator.classList.add('show');
         }
 
-        // Add cache-busting parameter to force fresh data
-        const cacheBuster = new Date().getTime();
-        const SHEET_URL = `${SHEET_BASE_URL}&_cb=${cacheBuster}`;
+        console.log('========== FETCHING ALL CLUSTER DATA ==========');
 
-        const response = await fetch(SHEET_URL);
-        const text = await response.text();
+        // Reset cluster data
+        allClusterData = {};
+        clusterTotals = {};
+        sheetData = [];
 
-        // Parse the JSONP response
-        const jsonString = text.substring(47, text.length - 2);
-        const data = JSON.parse(jsonString);
-
-        // Extract rows from the response
-        const rows = data.table.rows;
-        const cols = data.table.cols;
-
-        // Get column headers - also try 'id' field if label is empty
-        const headers = cols.map((col, idx) => {
-            // Try label first, then id, then generate a default
-            return col.label || col.id || `col${idx}`;
+        // Fetch data from each cluster sheet in parallel
+        const fetchPromises = Object.entries(CLUSTER_SHEETS).map(async ([clusterKey, sheetId]) => {
+            try {
+                console.log(`Fetching ${clusterKey} from sheet ${sheetId}...`);
+                const data = await fetchSingleSheet(sheetId);
+                console.log(`${clusterKey}: ${data.length} rows fetched`);
+                return { clusterKey, data };
+            } catch (error) {
+                console.error(`Error fetching ${clusterKey}:`, error);
+                return { clusterKey, data: [] };
+            }
         });
-        console.log('Column headers from sheet:', headers);
-        console.log('Raw column data:', cols);
 
-        // Parse data rows
-        sheetData = rows.map(row => {
-            const rowData = {};
-            row.c.forEach((cell, index) => {
-                const header = headers[index] || `col${index}`;
-                rowData[header] = cell ? (cell.v !== null ? cell.v : '') : '';
-                // Also store formatted value if available
-                if (cell && cell.f) {
-                    rowData[header + '_formatted'] = cell.f;
+        const results = await Promise.all(fetchPromises);
+
+        // Process results
+        results.forEach(({ clusterKey, data }) => {
+            allClusterData[clusterKey] = data;
+
+            // Calculate total for this cluster
+            let total = 0;
+            let categories = {};
+
+            data.forEach(row => {
+                const amount = parseFloat(
+                    row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0
+                ) || 0;
+                total += amount;
+
+                // Group by account name for breakdown
+                const accountName = row['Account Name'] || row['Account name'] || 'Other';
+                const category = getExpenseCategory(accountName);
+                if (!categories[category]) {
+                    categories[category] = { total: 0, count: 0 };
                 }
+                categories[category].total += amount;
+                categories[category].count++;
             });
-            return rowData;
+
+            clusterTotals[clusterKey] = {
+                total,
+                count: data.length,
+                categories
+            };
+
+            // Add to combined sheetData for transactions table
+            sheetData = sheetData.concat(data);
         });
 
-        console.log('Fetched data:', sheetData);
-        console.log('Total rows fetched:', sheetData.length);
+        console.log('========== CLUSTER TOTALS ==========');
+        Object.entries(clusterTotals).forEach(([key, data]) => {
+            console.log(`${key}: ₱${data.total.toLocaleString()} (${data.count} transactions)`);
+        });
+        console.log('=====================================');
 
-        // Update the dashboard with new data
+        // Update the dashboard with aggregated data
         updateDashboard(sheetData);
+
+        // Update cluster comparison chart (big pie)
+        updateClusterComparisonChart();
+
+        // Update individual cluster breakdown charts (small pies)
+        updateClusterBreakdownCharts();
 
         lastFetchTime = new Date();
 
-        // Hide refresh indicator
         setTimeout(() => {
             refreshIndicator.classList.remove('show');
         }, 1000);
@@ -78,16 +143,207 @@ async function fetchSheetData() {
         console.error('Error fetching sheet data:', error);
         refreshIndicator.classList.remove('show');
 
-        // Show error in transactions container
         const container = document.getElementById('transactions-container');
         if (container && !sheetData.length) {
             container.innerHTML = `
                 <div class="error-message">
                     <p>Unable to load data from Google Sheets.</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Make sure the sheet is publicly accessible (Share > Anyone with the link can view)</p>
+                    <p style="font-size: 12px; margin-top: 10px;">Make sure the sheets are publicly accessible</p>
                 </div>
             `;
         }
+    }
+}
+
+// Update the big pie chart with cluster vs cluster comparison
+function updateClusterComparisonChart() {
+    // Sort clusters by total expense (highest first)
+    const sortedClusters = Object.entries(clusterTotals)
+        .map(([key, data]) => ({
+            key,
+            name: CLUSTER_CONFIG[key]?.name || key,
+            total: data.total,
+            color: CLUSTER_CONFIG[key]?.color || '#999'
+        }))
+        .filter(c => c.total > 0)
+        .sort((a, b) => b.total - a.total);
+
+    console.log('Cluster comparison data:', sortedClusters);
+
+    // Update chartCategories for the big donut chart
+    chartCategories = sortedClusters.map((cluster, idx) => ({
+        name: cluster.name,
+        value: cluster.total,
+        color: pieChart3DColors[idx % pieChart3DColors.length]
+    }));
+
+    // Redraw the main donut chart
+    drawDonutChart();
+}
+
+// Update individual cluster breakdown charts (small pies)
+function updateClusterBreakdownCharts() {
+    const clusters = ['blumentrit', 'balicbalic', 'kalentong', 'paco'];
+
+    clusters.forEach(clusterKey => {
+        drawClusterBreakdownChart(clusterKey);
+    });
+}
+
+// Draw breakdown chart for a single cluster
+function drawClusterBreakdownChart(clusterKey) {
+    const canvas = document.getElementById(`chart-${clusterKey}`);
+    if (!canvas) {
+        console.log(`Canvas not found for ${clusterKey}`);
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const clusterData = clusterTotals[clusterKey];
+
+    const chartSize = 140;
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = chartSize * dpr;
+    canvas.height = chartSize * dpr;
+    canvas.style.width = chartSize + 'px';
+    canvas.style.height = chartSize + 'px';
+    ctx.scale(dpr, dpr);
+
+    const centerX = chartSize / 2;
+    const centerY = chartSize / 2;
+    const radius = (chartSize / 2) - 10;
+    const innerRadius = radius * 0.5;
+
+    ctx.clearRect(0, 0, chartSize, chartSize);
+
+    // Update total display
+    const totalEl = document.getElementById(`total-${clusterKey}`);
+    const centerEl = document.getElementById(`center-${clusterKey}`);
+    const legendEl = document.getElementById(`legend-${clusterKey}`);
+
+    if (totalEl && clusterData) {
+        totalEl.textContent = '₱' + clusterData.total.toLocaleString('en-PH');
+    }
+    if (centerEl && clusterData) {
+        centerEl.textContent = '₱' + clusterData.total.toLocaleString('en-PH', { maximumFractionDigits: 0 });
+    }
+
+    // Get sorted categories for this cluster
+    let categories = [];
+    if (clusterData && clusterData.categories) {
+        categories = Object.entries(clusterData.categories)
+            .map(([name, data]) => ({ name, total: data.total, count: data.count }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 5);
+    }
+
+    if (categories.length === 0 || !clusterData || clusterData.total === 0) {
+        // Draw empty state
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY + 8, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fill();
+
+        const emptyGradient = ctx.createLinearGradient(0, centerY - radius, 0, centerY + radius);
+        emptyGradient.addColorStop(0, '#E8E8E8');
+        emptyGradient.addColorStop(0.5, '#D0D0D0');
+        emptyGradient.addColorStop(1, '#B8B8B8');
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = emptyGradient;
+        ctx.fill();
+
+        const innerGradient = ctx.createLinearGradient(0, centerY - innerRadius, 0, centerY + innerRadius);
+        innerGradient.addColorStop(0, '#FFFFFF');
+        innerGradient.addColorStop(1, '#F5F5F5');
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = innerGradient;
+        ctx.fill();
+
+        ctx.fillStyle = '#999';
+        ctx.font = '600 11px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No Data', centerX, centerY);
+
+        if (centerEl) centerEl.style.display = 'none';
+        if (legendEl) {
+            legendEl.innerHTML = '<div style="color: #999; font-size: 11px; text-align: center;">No expenses recorded</div>';
+        }
+        return;
+    }
+
+    if (centerEl) centerEl.style.display = 'block';
+
+    const total = categories.reduce((sum, cat) => sum + cat.total, 0);
+    let startAngle = -Math.PI / 2;
+
+    // Draw 3D shadow
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + 8, radius, radius * 0.3, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.fill();
+
+    // Draw pie segments
+    categories.forEach((cat, idx) => {
+        const sliceAngle = (cat.total / total) * 2 * Math.PI;
+        const endAngle = startAngle + sliceAngle;
+        const color = expenseCategoryColors[idx % expenseCategoryColors.length];
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        const gradient = ctx.createLinearGradient(0, centerY - radius, 0, centerY + radius);
+        gradient.addColorStop(0, lightenColor(color, 20));
+        gradient.addColorStop(0.5, color);
+        gradient.addColorStop(1, shadeColor(color, -25));
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        startAngle = endAngle;
+    });
+
+    // Draw inner circle (donut hole)
+    const holeGradient = ctx.createRadialGradient(centerX, centerY - 5, 0, centerX, centerY, innerRadius);
+    holeGradient.addColorStop(0, '#FFFFFF');
+    holeGradient.addColorStop(0.7, '#FFF9E6');
+    holeGradient.addColorStop(1, '#F5EED6');
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = holeGradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Update legend
+    if (legendEl) {
+        legendEl.innerHTML = categories.map((cat, idx) => {
+            const color = expenseCategoryColors[idx % expenseCategoryColors.length];
+            const shortName = cat.name.length > 15 ? cat.name.substring(0, 15) + '...' : cat.name;
+            return `
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background: ${color};"></span>
+                    <span class="chart-legend-label" title="${cat.name}">${shortName}</span>
+                    <span class="chart-legend-value">₱${cat.total.toLocaleString('en-PH', { maximumFractionDigits: 0 })}</span>
+                </div>
+            `;
+        }).join('');
     }
 }
 
@@ -730,31 +986,28 @@ function shadeColor(color, percent) {
     ).toString(16).slice(1);
 }
 
-// Cost Center Data
+// Cost Center Data (now uses cluster data from clusterTotals)
 let costCenterData = {
     blumentrit: { total: 0, count: 0, transactions: [], categories: {} },
-    deca: { total: 0, count: 0, transactions: [], categories: {} },
-    walter: { total: 0, count: 0, transactions: [], categories: {} },
-    gagalangin: { total: 0, count: 0, transactions: [], categories: {} },
-    fajardo: { total: 0, count: 0, transactions: [], categories: {} }
+    balicbalic: { total: 0, count: 0, transactions: [], categories: {} },
+    kalentong: { total: 0, count: 0, transactions: [], categories: {} },
+    paco: { total: 0, count: 0, transactions: [], categories: {} }
 };
 
-// Cost Center Colors
+// Cost Center Colors (cluster colors)
 const costCenterColors = {
     blumentrit: '#C41E3A',
-    deca: '#F5A623',
-    walter: '#E8721C',
-    gagalangin: '#8B4513',
-    fajardo: '#D0021B'
+    balicbalic: '#1565C0',
+    kalentong: '#43A047',
+    paco: '#FB8C00'
 };
 
-// Cost Center Names
+// Cost Center Names (cluster names)
 const costCenterNames = {
-    blumentrit: 'Blumentrit (22348)',
-    deca: 'Deca (23582)',
-    walter: 'Walter (24723)',
-    gagalangin: 'Gagalangin (23974)',
-    fajardo: 'Fajardo (22755)'
+    blumentrit: 'Blumentrit',
+    balicbalic: 'Balicbalic',
+    kalentong: 'Kalentong',
+    paco: 'Paco'
 };
 
 // Expense Category Colors (for pie chart slices)
@@ -764,14 +1017,13 @@ const expenseCategoryColors = [
     '#795548', '#009688', '#3F51B5', '#E91E63', '#CDDC39'
 ];
 
-// Get cost center key from string
+// Get cost center/cluster key from string
 function getCostCenterKey(costCenterStr) {
     const str = costCenterStr.toLowerCase();
     if (str.includes('blumentrit') || str.includes('22348')) return 'blumentrit';
-    if (str.includes('deca') || str.includes('23582')) return 'deca';
-    if (str.includes('walter') || str.includes('24723')) return 'walter';
-    if (str.includes('gagalangin') || str.includes('23974')) return 'gagalangin';
-    if (str.includes('fajardo') || str.includes('22755')) return 'fajardo';
+    if (str.includes('balicbalic') || str.includes('balic')) return 'balicbalic';
+    if (str.includes('kalentong') || str.includes('23326')) return 'kalentong';
+    if (str.includes('paco') || str.includes('23252')) return 'paco';
     return null;
 }
 
@@ -802,83 +1054,30 @@ function getExpenseCategory(accountName) {
     return 'Other';
 }
 
-// Calculate Cost Center Totals from sheet data
+// Calculate Cost Center Totals - now uses clusterTotals from fetchSheetData
 function calculateCostCenterTotals() {
-    // Reset totals
-    costCenterData = {
-        blumentrit: { total: 0, count: 0, transactions: [], categories: {} },
-        deca: { total: 0, count: 0, transactions: [], categories: {} },
-        walter: { total: 0, count: 0, transactions: [], categories: {} },
-        gagalangin: { total: 0, count: 0, transactions: [], categories: {} },
-        fajardo: { total: 0, count: 0, transactions: [], categories: {} }
-    };
-
-    if (!sheetData || sheetData.length === 0) {
-        console.log('No sheet data available for cost center calculation');
-        return;
-    }
-
-    console.log('Calculating cost center totals from', sheetData.length, 'rows');
-    console.log('Sample row:', sheetData[0]);
-
-    sheetData.forEach((row, index) => {
-        const costCenterStr = row['Cost center'] || row['cost center'] || row['Cost Center'] || '';
-        const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['AMOUNT WITH VAT'] || row['Amount'] || 0) || 0;
-        const accountName = row['Account Name'] || row['Account name'] || row['account name'] || '';
-        const key = getCostCenterKey(costCenterStr);
-
-        // Log first few rows to debug
-        if (index < 3) {
-            console.log(`Row ${index}: Cost Center="${costCenterStr}" -> Key="${key}", Amount=${amount}, Account="${accountName}"`);
-        }
-
-        if (key && costCenterData[key]) {
-            costCenterData[key].total += amount;
-            costCenterData[key].count++;
-            costCenterData[key].transactions.push(row);
-
-            // Group by expense category
-            const category = getExpenseCategory(accountName);
-            if (!costCenterData[key].categories[category]) {
-                costCenterData[key].categories[category] = { total: 0, count: 0, transactions: [] };
-            }
-            costCenterData[key].categories[category].total += amount;
-            costCenterData[key].categories[category].count++;
-            costCenterData[key].categories[category].transactions.push(row);
-        }
+    // Copy clusterTotals to costCenterData for compatibility
+    costCenterData = {};
+    Object.keys(clusterTotals).forEach(key => {
+        costCenterData[key] = {
+            total: clusterTotals[key].total,
+            count: clusterTotals[key].count,
+            transactions: allClusterData[key] || [],
+            categories: clusterTotals[key].categories
+        };
     });
 
-    // Draw individual cost center charts
-    drawAllCostCenterCharts();
+    console.log('Cost center data updated from cluster totals');
 
-    // Update breakdown chart with cost center data
-    updateBreakdownWithCostCenters();
-
+    // Charts are now drawn by updateClusterBreakdownCharts called from fetchSheetData
     // Show all expenses by default
     showCostCenterExpenses('all');
 }
 
-// Update breakdown chart with cost center data (sorted by expense)
+// Update breakdown chart with cost center data - now calls updateClusterComparisonChart
 function updateBreakdownWithCostCenters() {
-    // Sort cost centers by total expense (highest first)
-    const sortedCenters = Object.entries(costCenterData)
-        .map(([key, data], idx) => ({
-            key,
-            name: costCenterNames[key],
-            total: data.total,
-            color: pieChart3DColors[idx % pieChart3DColors.length]
-        }))
-        .sort((a, b) => b.total - a.total);
-
-    // Update chart categories for 3D donut chart
-    chartCategories = sortedCenters.map((center, idx) => ({
-        name: center.name,
-        value: center.total,
-        color: pieChart3DColors[idx % pieChart3DColors.length]
-    }));
-
-    // Redraw 3D donut chart (legend is updated inside drawDonutChart)
-    drawDonutChart();
+    // This is now handled by updateClusterComparisonChart
+    updateClusterComparisonChart();
 }
 
 // Show expense details for selected cost center
@@ -964,19 +1163,19 @@ function formatTransactionDate(dateStr) {
 
 // Draw all cost center pie charts
 function drawAllCostCenterCharts() {
-    const centers = ['blumentrit', 'deca', 'walter', 'gagalangin', 'fajardo'];
+    const centers = ['blumentrit', 'balicbalic', 'kalentong', 'paco'];
 
-    console.log('Drawing all cost center charts...');
-    console.log('Cost center data:', costCenterData);
+    console.log('Drawing all cluster charts...');
+    console.log('Cluster totals:', clusterTotals);
 
     centers.forEach(centerKey => {
-        drawCostCenterPieChart(centerKey);
+        drawClusterBreakdownChart(centerKey);
     });
 }
 
 // Draw initial placeholder charts on page load
 function drawPlaceholderCharts() {
-    const centers = ['blumentrit', 'deca', 'walter', 'gagalangin', 'fajardo'];
+    const centers = ['blumentrit', 'balicbalic', 'kalentong', 'paco'];
 
     centers.forEach(centerKey => {
         const canvas = document.getElementById(`chart-${centerKey}`);

@@ -163,9 +163,9 @@
 
             <!-- Right Panel -->
             <div class="right-panel">
-                <!-- Main Cost Center Breakdown Chart -->
+                <!-- Main Cluster Comparison Chart -->
                 <div class="breakdown-section">
-                    <h2 class="section-title">Cost Center Breakdown</h2>
+                    <h2 class="section-title">Total Expense by Cluster</h2>
                     <div class="breakdown-content-3d">
                         <div class="pie-chart-3d-wrapper">
                             <div class="pie-chart-labels" id="pie-chart-labels">
@@ -181,9 +181,9 @@
                     </div>
                 </div>
 
-                <!-- 5 Cost Center Mini Charts -->
+                <!-- Cluster Expense Breakdown Charts -->
                 <div class="cost-center-charts-section">
-                    <h2 class="section-title">Cost Center Expense Breakdown</h2>
+                    <h2 class="section-title">Expense Breakdown by Cluster</h2>
                     <div class="cost-center-charts-grid">
                         <!-- Blumentrit Chart -->
                         <div class="cost-center-chart-card" data-center="blumentrit">
@@ -198,57 +198,44 @@
                             <div class="chart-total" id="total-blumentrit">₱0</div>
                             <div class="chart-legend" id="legend-blumentrit"></div>
                         </div>
-                        <!-- Deca Chart -->
-                        <div class="cost-center-chart-card" data-center="deca">
-                            <h3 class="chart-title">DECA</h3>
+                        <!-- Balicbalic Chart -->
+                        <div class="cost-center-chart-card" data-center="balicbalic">
+                            <h3 class="chart-title">BALICBALIC</h3>
                             <div class="chart-wrapper">
-                                <div class="chart-labels" id="labels-deca"></div>
+                                <div class="chart-labels" id="labels-balicbalic"></div>
                                 <div class="mini-chart-container">
-                                    <canvas id="chart-deca" width="140" height="140"></canvas>
-                                    <div class="chart-center-value" id="center-deca">₱0</div>
+                                    <canvas id="chart-balicbalic" width="140" height="140"></canvas>
+                                    <div class="chart-center-value" id="center-balicbalic">₱0</div>
                                 </div>
                             </div>
-                            <div class="chart-total" id="total-deca">₱0</div>
-                            <div class="chart-legend" id="legend-deca"></div>
+                            <div class="chart-total" id="total-balicbalic">₱0</div>
+                            <div class="chart-legend" id="legend-balicbalic"></div>
                         </div>
-                        <!-- Walter Chart -->
-                        <div class="cost-center-chart-card" data-center="walter">
-                            <h3 class="chart-title">WALTER</h3>
+                        <!-- Kalentong Chart -->
+                        <div class="cost-center-chart-card" data-center="kalentong">
+                            <h3 class="chart-title">KALENTONG</h3>
                             <div class="chart-wrapper">
-                                <div class="chart-labels" id="labels-walter"></div>
+                                <div class="chart-labels" id="labels-kalentong"></div>
                                 <div class="mini-chart-container">
-                                    <canvas id="chart-walter" width="140" height="140"></canvas>
-                                    <div class="chart-center-value" id="center-walter">₱0</div>
+                                    <canvas id="chart-kalentong" width="140" height="140"></canvas>
+                                    <div class="chart-center-value" id="center-kalentong">₱0</div>
                                 </div>
                             </div>
-                            <div class="chart-total" id="total-walter">₱0</div>
-                            <div class="chart-legend" id="legend-walter"></div>
+                            <div class="chart-total" id="total-kalentong">₱0</div>
+                            <div class="chart-legend" id="legend-kalentong"></div>
                         </div>
-                        <!-- Gagalangin Chart -->
-                        <div class="cost-center-chart-card" data-center="gagalangin">
-                            <h3 class="chart-title">GAGALANGIN</h3>
+                        <!-- Paco Chart -->
+                        <div class="cost-center-chart-card" data-center="paco">
+                            <h3 class="chart-title">PACO</h3>
                             <div class="chart-wrapper">
-                                <div class="chart-labels" id="labels-gagalangin"></div>
+                                <div class="chart-labels" id="labels-paco"></div>
                                 <div class="mini-chart-container">
-                                    <canvas id="chart-gagalangin" width="140" height="140"></canvas>
-                                    <div class="chart-center-value" id="center-gagalangin">₱0</div>
+                                    <canvas id="chart-paco" width="140" height="140"></canvas>
+                                    <div class="chart-center-value" id="center-paco">₱0</div>
                                 </div>
                             </div>
-                            <div class="chart-total" id="total-gagalangin">₱0</div>
-                            <div class="chart-legend" id="legend-gagalangin"></div>
-                        </div>
-                        <!-- Fajardo Chart -->
-                        <div class="cost-center-chart-card" data-center="fajardo">
-                            <h3 class="chart-title">FAJARDO</h3>
-                            <div class="chart-wrapper">
-                                <div class="chart-labels" id="labels-fajardo"></div>
-                                <div class="mini-chart-container">
-                                    <canvas id="chart-fajardo" width="140" height="140"></canvas>
-                                    <div class="chart-center-value" id="center-fajardo">₱0</div>
-                                </div>
-                            </div>
-                            <div class="chart-total" id="total-fajardo">₱0</div>
-                            <div class="chart-legend" id="legend-fajardo"></div>
+                            <div class="chart-total" id="total-paco">₱0</div>
+                            <div class="chart-legend" id="legend-paco"></div>
                         </div>
                     </div>
                 </div>
@@ -449,6 +436,6 @@
         }
         // If false, redirect already happened
     </script>
-    <script src="script.js"></script>
+    <script src="script.js?v=2"></script>
 </body>
 </html>
