@@ -430,21 +430,71 @@ function getCostCenterDisplayName(costCenterStr) {
     return costCenterStr.replace(/jbs/i, 'JBS').trim();
 }
 
+// Get cost center from row data with fallback to cluster config
+function getCostCenterFromRow(row) {
+    // Try various column name variations for Cost Center
+    let costCenterStr =
+        row['Cost center'] ||
+        row['cost center'] ||
+        row['Cost Center'] ||
+        row['COST CENTER'] ||
+        row['CostCenter'] ||
+        row['costcenter'] ||
+        row['Cost Center Name'] ||
+        row['cost_center'] ||
+        null;
+
+    // If found, use it
+    if (costCenterStr && costCenterStr.toString().trim() !== '') {
+        return {
+            code: extractCostCenterCode(costCenterStr),
+            name: getCostCenterDisplayName(costCenterStr)
+        };
+    }
+
+    // Fallback: Use the cluster's configured cost center
+    // For clusters with multiple cost centers, try to detect from other fields
+    if (currentCluster.costCenters && currentCluster.costCenters.length > 0) {
+        // Try to match cost center from any field that might contain the code
+        const rowStr = JSON.stringify(row).toLowerCase();
+        for (const cc of currentCluster.costCenters) {
+            if (rowStr.includes(cc.code) || rowStr.includes(cc.name.toLowerCase())) {
+                return {
+                    code: cc.code,
+                    name: cc.name
+                };
+            }
+        }
+        // Default to first cost center if can't detect
+        return {
+            code: currentCluster.costCenters[0].code,
+            name: currentCluster.costCenters[0].name
+        };
+    }
+
+    // Single cost center cluster - use the configured cost center
+    return {
+        code: currentCluster.costCenterCode,
+        name: currentCluster.costCenterName
+    };
+}
+
 // Update breakdown chart - now shows cost centers in big pie
 function updateBreakdownChart(data) {
     // Group data by cost center
     const costCenters = {};
 
     data.forEach(row => {
-        const costCenterStr = row['Cost center'] || row['cost center'] || row['Cost Center'] || 'Unknown';
-        const costCenterCode = extractCostCenterCode(costCenterStr);
+        const costCenterInfo = getCostCenterFromRow(row);
+        const costCenterCode = costCenterInfo.code;
+        const costCenterName = costCenterInfo.name;
         const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0) || 0;
         const accountName = row['Account Name'] || row['Account name'] || 'Other';
         const category = getExpenseCategory(accountName);
 
         if (!costCenters[costCenterCode]) {
             costCenters[costCenterCode] = {
-                name: getCostCenterDisplayName(costCenterStr),
+                name: getCostCenterDisplayName(costCenterName),
                 total: 0,
                 count: 0,
                 categories: {}
