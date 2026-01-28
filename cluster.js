@@ -416,33 +416,72 @@ const costCenterColors = [
     '#00ACC1', '#F5A623', '#E8721C', '#8B4513', '#D0021B'
 ];
 
+// Normalize a header/key string for comparison (lowercase, trim, remove extra spaces)
+function normalizeKey(key) {
+    if (!key) return '';
+    return key.toString().toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+// Get value from row by trying normalized key matching
+function getRowValue(row, targetKeys) {
+    // targetKeys is an array of possible key names to try
+    // First, try exact matches
+    for (const key of targetKeys) {
+        if (row[key] !== undefined && row[key] !== null && row[key] !== '') {
+            return row[key];
+        }
+    }
+
+    // Then, try normalized matching against all row keys
+    const normalizedTargets = targetKeys.map(k => normalizeKey(k));
+    for (const rowKey of Object.keys(row)) {
+        const normalizedRowKey = normalizeKey(rowKey);
+        for (const target of normalizedTargets) {
+            if (normalizedRowKey === target || normalizedRowKey.includes(target) || target.includes(normalizedRowKey)) {
+                if (row[rowKey] !== undefined && row[rowKey] !== null && row[rowKey] !== '') {
+                    return row[rowKey];
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
 // Extract cost center code from cost center string
 function extractCostCenterCode(costCenterStr) {
     if (!costCenterStr) return 'unknown';
-    const match = costCenterStr.match(/\d{5}/);
-    return match ? match[0] : costCenterStr;
+    const str = costCenterStr.toString();
+    const match = str.match(/\d{5}/);
+    return match ? match[0] : str;
 }
 
 // Get cost center display name
 function getCostCenterDisplayName(costCenterStr) {
     if (!costCenterStr) return 'Unknown';
     // Clean up the name - capitalize properly
-    return costCenterStr.replace(/jbs/i, 'JBS').trim();
+    return costCenterStr.toString().replace(/jbs/i, 'JBS').trim();
 }
 
 // Get cost center from row data with fallback to cluster config
 function getCostCenterFromRow(row) {
-    // Try various column name variations for Cost Center
-    let costCenterStr =
-        row['Cost center'] ||
-        row['cost center'] ||
-        row['Cost Center'] ||
-        row['COST CENTER'] ||
-        row['CostCenter'] ||
-        row['costcenter'] ||
-        row['Cost Center Name'] ||
-        row['cost_center'] ||
-        null;
+    // Use normalized lookup for Cost Center column
+    const costCenterStr = getRowValue(row, [
+        'Cost Center',
+        'Cost center',
+        'cost center',
+        'COST CENTER',
+        'CostCenter',
+        'costcenter',
+        'Cost Center Name',
+        'cost_center',
+        'cost-center'
+    ]);
+
+    // Debug: Log what we found
+    if (!costCenterStr) {
+        console.log('Cost Center not found in row. Row keys:', Object.keys(row));
+    }
 
     // If found, use it
     if (costCenterStr && costCenterStr.toString().trim() !== '') {
@@ -484,12 +523,25 @@ function updateBreakdownChart(data) {
     // Group data by cost center
     const costCenters = {};
 
+    // Debug: Log first row to see actual column names
+    if (data.length > 0) {
+        console.log('========== ROW KEYS FOR DEBUGGING ==========');
+        console.log('Available columns:', Object.keys(data[0]));
+        console.log('First row data:', data[0]);
+        console.log('=============================================');
+    }
+
     data.forEach(row => {
         const costCenterInfo = getCostCenterFromRow(row);
         const costCenterCode = costCenterInfo.code;
         const costCenterName = costCenterInfo.name;
-        const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0) || 0;
-        const accountName = row['Account Name'] || row['Account name'] || 'Other';
+
+        // Use normalized lookup for amount
+        const amountRaw = getRowValue(row, ['AMT W/ VAt', 'AMT W/ VAT', 'Amount', 'amount', 'AMOUNT', 'Amount with VAT', 'Amount With VAT']);
+        const amount = parseFloat(amountRaw || 0) || 0;
+
+        // Use normalized lookup for account name
+        const accountName = getRowValue(row, ['Account Name', 'Account name', 'account name', 'ACCOUNT NAME', 'AccountName']) || 'Other';
         const category = getExpenseCategory(accountName);
 
         if (!costCenters[costCenterCode]) {
