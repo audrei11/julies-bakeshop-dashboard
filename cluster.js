@@ -83,6 +83,7 @@ const currentCluster = CLUSTER_CONFIG[currentClusterKey];
 // ==================== GOOGLE SHEETS INTEGRATION ====================
 // Cluster-specific Google Sheet IDs
 const CLUSTER_SHEETS = {
+    blumentrit: '1Iw76w4c0Jp8xwSj1UgukZlkFRGOclkvJk9TeaZzuiw0',
     balicbalic: '1Ssha1noo1nSpDdOr9hOmq3FDmF_cOZur3XMqrvNZTqI',
     paco: '1AHW0frOcBk1JUF7MdVpazdHQBUgKFXM0I-JBUKsmCNY',
     kalentong: '1FXWoiZEehsHpfY-fa1S5nufWKgN-4gnFXpqguRSZMN8'
