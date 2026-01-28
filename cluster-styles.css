@@ -296,3 +296,197 @@
 .cluster-summary-section {
     animation-delay: 0.3s;
 }
+
+/* ==================== COST CENTER BREAKDOWN SECTION ==================== */
+
+.cost-center-breakdown-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 25px;
+    margin-top: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    animation: fadeIn 0.5s ease-out forwards;
+    animation-delay: 0.4s;
+}
+
+.cost-center-charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.cost-center-card {
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFF5CC 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.cost-center-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(255, 193, 7, 0.25);
+}
+
+.cost-center-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 18px;
+    background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(139, 0, 0, 0.05) 100%);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.cost-center-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #5C3317;
+    margin: 0;
+    line-height: 1.3;
+    flex: 1;
+    padding-right: 10px;
+}
+
+.cost-center-card-total {
+    font-size: 14px;
+    font-weight: 800;
+    color: #C41E3A;
+    white-space: nowrap;
+}
+
+.cost-center-card-body {
+    display: flex;
+    align-items: flex-start;
+    padding: 18px;
+    gap: 15px;
+}
+
+.cost-center-chart-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+}
+
+.cost-center-chart-wrapper canvas {
+    display: block;
+}
+
+.cost-center-chart-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #5C3317;
+    line-height: 1.1;
+}
+
+.cost-center-chart-center small {
+    display: block;
+    font-size: 9px;
+    font-weight: 600;
+    color: #8B7355;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.cost-center-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cc-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.cc-legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.cc-legend-label {
+    flex: 1;
+    color: #5C3317;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-legend-value {
+    font-weight: 700;
+    color: #8B7355;
+    flex-shrink: 0;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 30px;
+    color: #8B7355;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Responsive adjustments for cost center breakdown */
+@media (max-width: 768px) {
+    .cost-center-charts-container {
+        grid-template-columns: 1fr;
+    }
+
+    .cost-center-card-body {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .cost-center-legend {
+        width: 100%;
+        align-items: center;
+    }
+
+    .cc-legend-item {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .cost-center-breakdown-section {
+        padding: 18px;
+    }
+
+    .cost-center-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .cost-center-card-title {
+        padding-right: 0;
+    }
+
+    .cost-center-card-body {
+        padding: 15px;
+    }
+
+    .cost-center-chart-wrapper {
+        width: 100px;
+        height: 100px;
+    }
+
+    .cost-center-chart-center {
+        font-size: 16px;
+    }
+}

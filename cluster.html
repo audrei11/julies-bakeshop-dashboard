@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="cluster-styles.css">
+    <link rel="stylesheet" href="cluster-styles.css?v=2">
 </head>
 <body>
     <!-- Data Refresh Indicator -->
@@ -167,9 +167,9 @@
 
             <!-- Right Panel -->
             <div class="right-panel">
-                <!-- Expense Breakdown Chart -->
+                <!-- Cost Center Breakdown Chart (Big Pie) -->
                 <div class="breakdown-section">
-                    <h2 class="section-title">Expense Breakdown</h2>
+                    <h2 class="section-title">Cost Center Breakdown</h2>
                     <div class="breakdown-content-3d">
                         <div class="pie-chart-3d-wrapper">
                             <div class="pie-chart-labels" id="pie-chart-labels">
@@ -217,6 +217,14 @@
                                 <div class="summary-card-label">Last Update</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Cost Center Category Breakdown (Small Pies) -->
+                <div class="cost-center-breakdown-section">
+                    <h2 class="section-title">Category Breakdown by Cost Center</h2>
+                    <div class="cost-center-charts-container" id="cost-center-charts-container">
+                        <div class="loading-message">Loading cost center data...</div>
                     </div>
                 </div>
             </div>
@@ -425,6 +433,6 @@
             // If false, redirect already happened
         }
     </script>
-    <script src="cluster.js?v=3"></script>
+    <script src="cluster.js?v=4"></script>
 </body>
 </html>

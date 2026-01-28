@@ -401,35 +401,241 @@ function getExpenseCategory(accountName) {
 // Store categories for chart
 let chartCategories = [];
 
+// Store cost center data for charts
+let costCenterTotals = {};
+
 // Expense Category Colors
 const expenseCategoryColors = [
     '#C41E3A', '#1565C0', '#43A047', '#FB8C00', '#F5A623',
     '#E8721C', '#8B4513', '#D0021B', '#00ACC1', '#9C27B0'
 ];
 
-// Update breakdown chart
+// Cost Center Colors (distinct from expense colors)
+const costCenterColors = [
+    '#C41E3A', '#1565C0', '#43A047', '#FB8C00', '#9C27B0',
+    '#00ACC1', '#F5A623', '#E8721C', '#8B4513', '#D0021B'
+];
+
+// Extract cost center code from cost center string
+function extractCostCenterCode(costCenterStr) {
+    if (!costCenterStr) return 'unknown';
+    const match = costCenterStr.match(/\d{5}/);
+    return match ? match[0] : costCenterStr;
+}
+
+// Get cost center display name
+function getCostCenterDisplayName(costCenterStr) {
+    if (!costCenterStr) return 'Unknown';
+    // Clean up the name - capitalize properly
+    return costCenterStr.replace(/jbs/i, 'JBS').trim();
+}
+
+// Update breakdown chart - now shows cost centers in big pie
 function updateBreakdownChart(data) {
-    const categories = {};
+    // Group data by cost center
+    const costCenters = {};
 
     data.forEach(row => {
-        const accountName = row['Account Name'] || row['Account name'] || 'Other';
+        const costCenterStr = row['Cost center'] || row['cost center'] || row['Cost Center'] || 'Unknown';
+        const costCenterCode = extractCostCenterCode(costCenterStr);
         const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0) || 0;
+        const accountName = row['Account Name'] || row['Account name'] || 'Other';
         const category = getExpenseCategory(accountName);
 
-        categories[category] = (categories[category] || 0) + amount;
+        if (!costCenters[costCenterCode]) {
+            costCenters[costCenterCode] = {
+                name: getCostCenterDisplayName(costCenterStr),
+                total: 0,
+                count: 0,
+                categories: {}
+            };
+        }
+
+        costCenters[costCenterCode].total += amount;
+        costCenters[costCenterCode].count++;
+
+        // Track categories within this cost center
+        if (!costCenters[costCenterCode].categories[category]) {
+            costCenters[costCenterCode].categories[category] = 0;
+        }
+        costCenters[costCenterCode].categories[category] += amount;
     });
 
-    const sortedCategories = Object.entries(categories)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6);
+    // Store for small pie charts
+    costCenterTotals = costCenters;
 
-    chartCategories = sortedCategories.map(([name, value], index) => ({
-        name,
-        value,
-        color: expenseCategoryColors[index % expenseCategoryColors.length]
+    // Sort cost centers by total (highest first)
+    const sortedCostCenters = Object.entries(costCenters)
+        .map(([code, data]) => ({
+            code,
+            name: data.name,
+            value: data.total,
+            count: data.count
+        }))
+        .filter(cc => cc.value > 0)
+        .sort((a, b) => b.value - a.value);
+
+    console.log('Cost Center breakdown:', sortedCostCenters);
+
+    // Update chartCategories for the big donut chart (now shows cost centers)
+    chartCategories = sortedCostCenters.map((cc, index) => ({
+        name: cc.name,
+        value: cc.value,
+        color: costCenterColors[index % costCenterColors.length]
     }));
 
+    // Draw main chart (cost center comparison)
     drawDonutChart();
+
+    // Draw small charts (category breakdown per cost center)
+    updateCostCenterBreakdownCharts();
+}
+
+// Update small pie charts for each cost center
+function updateCostCenterBreakdownCharts() {
+    const container = document.getElementById('cost-center-charts-container');
+    if (!container) return;
+
+    const costCenterEntries = Object.entries(costCenterTotals)
+        .filter(([code, data]) => data.total > 0)
+        .sort((a, b) => b[1].total - a[1].total);
+
+    if (costCenterEntries.length === 0) {
+        container.innerHTML = '<div class="no-data-message">No cost center data available</div>';
+        return;
+    }
+
+    // Generate HTML for cost center cards
+    container.innerHTML = costCenterEntries.map(([code, data], index) => `
+        <div class="cost-center-card">
+            <div class="cost-center-card-header">
+                <h3 class="cost-center-card-title">${data.name}</h3>
+                <span class="cost-center-card-total">₱${data.total.toLocaleString('en-PH', { maximumFractionDigits: 0 })}</span>
+            </div>
+            <div class="cost-center-card-body">
+                <div class="cost-center-chart-wrapper">
+                    <canvas id="cc-chart-${code}" width="120" height="120"></canvas>
+                    <div class="cost-center-chart-center" id="cc-center-${code}">
+                        ${data.count}
+                        <small>items</small>
+                    </div>
+                </div>
+                <div class="cost-center-legend" id="cc-legend-${code}"></div>
+            </div>
+        </div>
+    `).join('');
+
+    // Draw each small pie chart
+    costCenterEntries.forEach(([code, data]) => {
+        drawCostCenterPieChart(code, data);
+    });
+}
+
+// Draw a small pie chart for a single cost center
+function drawCostCenterPieChart(code, data) {
+    const canvas = document.getElementById(`cc-chart-${code}`);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const chartSize = 120;
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = chartSize * dpr;
+    canvas.height = chartSize * dpr;
+    canvas.style.width = chartSize + 'px';
+    canvas.style.height = chartSize + 'px';
+    ctx.scale(dpr, dpr);
+
+    const centerX = chartSize / 2;
+    const centerY = chartSize / 2;
+    const radius = (chartSize / 2) - 8;
+    const innerRadius = radius * 0.55;
+
+    ctx.clearRect(0, 0, chartSize, chartSize);
+
+    // Get sorted categories for this cost center
+    const categories = Object.entries(data.categories)
+        .map(([name, total]) => ({ name, total }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5);
+
+    if (categories.length === 0) {
+        // Draw empty state
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = '#E0E0E0';
+        ctx.fill();
+        return;
+    }
+
+    const total = categories.reduce((sum, cat) => sum + cat.total, 0);
+    let startAngle = -Math.PI / 2;
+
+    // Draw 3D shadow effect
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + 6, radius, radius * 0.25, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fill();
+
+    // Draw pie segments
+    categories.forEach((cat, idx) => {
+        const sliceAngle = (cat.total / total) * 2 * Math.PI;
+        const endAngle = startAngle + sliceAngle;
+        const color = expenseCategoryColors[idx % expenseCategoryColors.length];
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        const gradient = ctx.createLinearGradient(0, centerY - radius, 0, centerY + radius);
+        gradient.addColorStop(0, lightenColor(color, 20));
+        gradient.addColorStop(0.5, color);
+        gradient.addColorStop(1, shadeColor(color, -20));
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        startAngle = endAngle;
+    });
+
+    // Draw inner circle (donut hole)
+    const holeGradient = ctx.createRadialGradient(centerX, centerY - 3, 0, centerX, centerY, innerRadius);
+    holeGradient.addColorStop(0, '#FFFFFF');
+    holeGradient.addColorStop(0.7, '#FFF9E6');
+    holeGradient.addColorStop(1, '#F5EED6');
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = holeGradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Update legend
+    const legendEl = document.getElementById(`cc-legend-${code}`);
+    if (legendEl) {
+        legendEl.innerHTML = categories.map((cat, idx) => {
+            const color = expenseCategoryColors[idx % expenseCategoryColors.length];
+            const percentage = Math.round((cat.total / total) * 100);
+            const shortName = cat.name.length > 12 ? cat.name.substring(0, 12) + '...' : cat.name;
+            return `
+                <div class="cc-legend-item">
+                    <span class="cc-legend-color" style="background: ${color};"></span>
+                    <span class="cc-legend-label" title="${cat.name}">${shortName}</span>
+                    <span class="cc-legend-value">${percentage}%</span>
+                </div>
+            `;
+        }).join('');
+    }
 }
 
 // Draw 3D Pie Chart
