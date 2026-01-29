@@ -107,10 +107,12 @@ const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/
 console.log('========== CLUSTER DATA SOURCE ==========');
 console.log('Selected Cluster:', currentClusterKey);
 console.log('Cluster Config:', currentCluster);
+console.log('Available CLUSTER_SHEETS keys:', Object.keys(CLUSTER_SHEETS));
+console.log('Lookup result for "' + currentClusterKey + '":', CLUSTER_SHEETS[currentClusterKey]);
 console.log('Resolved Sheet ID:', SHEET_ID);
 console.log('Has Dedicated Sheet?:', CLUSTER_SHEETS.hasOwnProperty(currentClusterKey));
 console.log('Webhook URL:', CLUSTER_WEBHOOKS[currentClusterKey] || 'None');
-console.log('Sheet URL:', SHEET_BASE_URL);
+console.log('Full Sheet URL:', SHEET_BASE_URL);
 console.log('==========================================');
 
 // Store fetched data
@@ -122,16 +124,39 @@ let lastFetchTime = null;
 async function fetchSheetData() {
     const refreshIndicator = document.getElementById('refresh-indicator');
 
+    console.log('========== FETCH STARTING ==========');
+    console.log('Previous sheetData length:', sheetData ? sheetData.length : 'undefined');
+    console.log('Previous clusterData length:', clusterData ? clusterData.length : 'undefined');
+
+    // IMPORTANT: Clear all cached data before fetching to ensure fresh data
+    sheetData = [];
+    clusterData = [];
+    costCenterTotals = {};
+    chartCategories = [];
+
+    console.log('Data arrays cleared. Starting fetch...');
+
     try {
         if (lastFetchTime) {
             refreshIndicator.classList.add('show');
         }
 
+        // Use cache-busting URL parameters (headers cause CORS issues with Google Sheets)
         const cacheBuster = new Date().getTime();
-        const SHEET_URL = `${SHEET_BASE_URL}&_cb=${cacheBuster}`;
+        const randomSeed = Math.random().toString(36).substring(7);
+        const SHEET_URL = `${SHEET_BASE_URL}&_cb=${cacheBuster}&_r=${randomSeed}`;
 
+        console.log('Fetching URL:', SHEET_URL);
+
+        // Simple fetch - no custom headers (they cause CORS errors with Google Sheets)
         const response = await fetch(SHEET_URL);
         const text = await response.text();
+
+        // DEBUG: Log raw response length
+        console.log('========== RAW FETCH DEBUG ==========');
+        console.log('Fetch Time:', new Date().toISOString());
+        console.log('Response length:', text.length);
+        console.log('Response preview:', text.substring(0, 200));
 
         const jsonString = text.substring(47, text.length - 2);
         const data = JSON.parse(jsonString);
@@ -139,26 +164,65 @@ async function fetchSheetData() {
         const rows = data.table.rows;
         const cols = data.table.cols;
 
-        const headers = cols.map((col, idx) => col.label || col.id || `col${idx}`);
+        // DEBUG: Log raw rows count BEFORE any processing
+        console.log('Raw rows count from Google:', rows ? rows.length : 'NULL');
+        console.log('Raw cols count from Google:', cols ? cols.length : 'NULL');
+
+        // Build headers with normalization for tolerance
+        const headers = cols.map((col, idx) => {
+            const label = col.label || col.id || `col${idx}`;
+            return label.toString().trim();
+        });
+
+        // Create normalized header map: normalizedKey -> originalHeader
+        const headerMap = {};
+        headers.forEach((header, idx) => {
+            const normKey = normalizeKey(header);
+            if (normKey) {
+                headerMap[normKey] = header;
+            }
+        });
+
+        // DEBUG: Log resolved headers and normalized map
+        console.log('Resolved Headers:', headers);
+        console.log('Header indexes:', headers.map((h, i) => `${i}: "${h}"`));
+        console.log('Normalized Header Map:', headerMap);
 
         sheetData = rows.map(row => {
             const rowData = {};
+            const normalizedData = {}; // Store normalized key -> value
+
             row.c.forEach((cell, index) => {
                 const header = headers[index] || `col${index}`;
-                rowData[header] = cell ? (cell.v !== null ? cell.v : '') : '';
+                const value = cell ? (cell.v !== null ? cell.v : '') : '';
+
+                // Store with original key
+                rowData[header] = value;
+
+                // Store with normalized key for fast lookup
+                const normKey = normalizeKey(header);
+                if (normKey) {
+                    normalizedData[normKey] = value;
+                }
+
+                // Also store formatted value if available
                 if (cell && cell.f) {
                     rowData[header + '_formatted'] = cell.f;
                 }
             });
+
+            // Attach normalized data for fast lookup
+            rowData._normalized = normalizedData;
             return rowData;
         });
 
-        // DEBUG: Log fetched data
-        console.log('========== SHEET DATA FETCHED ==========');
-        console.log('Column Headers:', headers);
-        console.log('Total Rows from Sheet:', sheetData.length);
+        // DEBUG: Log processed data
+        console.log('========== SHEET DATA PROCESSED ==========');
+        console.log('Total Rows after parsing:', sheetData.length);
         console.log('First Row Sample:', sheetData[0]);
-        console.log('=========================================');
+        console.log('All keys in first row:', sheetData[0] ? Object.keys(sheetData[0]).filter(k => k !== '_normalized') : 'NO DATA');
+        console.log('Normalized keys in first row:', sheetData[0] ? Object.keys(sheetData[0]._normalized || {}) : 'NO DATA');
+        console.log('==========================================');
 
         // Filter data for current cluster
         filterClusterData();
@@ -173,18 +237,29 @@ async function fetchSheetData() {
         }, 1000);
 
     } catch (error) {
+        console.error('========== FETCH ERROR ==========');
         console.error('Error fetching sheet data:', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('=================================');
         refreshIndicator.classList.remove('show');
 
+        // Show error message in UI but DON'T reset stats to zero
+        // This allows debugging partial data issues
         const container = document.getElementById('transactions-container');
-        if (container && !sheetData.length) {
+        if (container) {
             container.innerHTML = `
                 <div class="error-message">
                     <p>Unable to load data from Google Sheets.</p>
-                    <p style="font-size: 12px; margin-top: 10px;">Make sure the sheet is publicly accessible</p>
+                    <p style="font-size: 12px; margin-top: 10px;">Error: ${error.message}</p>
+                    <p style="font-size: 12px;">Check console for details</p>
                 </div>
             `;
         }
+
+        // TEMPORARILY DISABLED: Don't reset stats to zero so we can debug
+        // updateStatCards({ totalBalance: 0, thisWeek: 0, thisMonth: 0, thisYear: 0, transactionCount: 0 });
+        // drawDonutChart();
     }
 }
 
@@ -207,8 +282,17 @@ function filterClusterData() {
     } else {
         // Filter shared sheet data by cluster name/code
         clusterData = sheetData.filter(row => {
-            const costCenterStr = (row['Cost center'] || row['cost center'] || row['Cost Center'] || '').toLowerCase();
-            const clusterStr = (row['Cluster'] || row['cluster'] || '').toLowerCase();
+            // Use normalized lookup for cost center and cluster
+            let costCenterStr = '';
+            let clusterStr = '';
+
+            if (row._normalized) {
+                costCenterStr = (row._normalized['costcenter'] || '').toString().toLowerCase();
+                clusterStr = (row._normalized['cluster'] || '').toString().toLowerCase();
+            } else {
+                costCenterStr = (row['Cost center'] || row['cost center'] || row['Cost Center'] || '').toLowerCase();
+                clusterStr = (row['Cluster'] || row['cluster'] || '').toLowerCase();
+            }
 
             return costCenterStr.includes(currentCluster.costCenterCode) ||
                    nameVariations.some(name => costCenterStr.includes(name)) ||
@@ -219,6 +303,10 @@ function filterClusterData() {
     console.log('Final rows for', currentCluster.name + ':', clusterData.length);
     if (clusterData.length > 0) {
         console.log('Sample row:', clusterData[0]);
+        console.log('Sample row keys:', Object.keys(clusterData[0]));
+    } else {
+        console.log('WARNING: clusterData is EMPTY after filtering!');
+        console.log('sheetData length was:', sheetData.length);
     }
     console.log('=====================================');
 }
@@ -229,6 +317,9 @@ function updateDashboard() {
         document.getElementById('transactions-container').innerHTML =
             '<div class="loading-message">No transactions found for this cluster</div>';
         updateStatCards({ totalBalance: 0, thisWeek: 0, thisMonth: 0, thisYear: 0, transactionCount: 0 });
+        // IMPORTANT: Also update charts with empty data to clear old visuals
+        updateBreakdownChart([]);
+        updateClusterSummary([], { totalBalance: 0, thisWeek: 0, thisMonth: 0, thisYear: 0, transactionCount: 0 });
         return;
     }
 
@@ -255,11 +346,23 @@ function calculateStats(data) {
     let thisYear = 0;
 
     data.forEach(row => {
-        const amount = parseFloat(
-            row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0
-        ) || 0;
+        // Use normalized lookup for amount
+        let amountRaw = 0;
+        if (row._normalized) {
+            amountRaw = row._normalized['amtwvat'] || row._normalized['amtwithvat'] ||
+                        row._normalized['amount'] || 0;
+        } else {
+            amountRaw = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
+        }
+        const amount = parseFloat(amountRaw) || 0;
 
-        const dateStr = row['Date'] || row['date'] || '';
+        // Use normalized lookup for date
+        let dateStr = '';
+        if (row._normalized) {
+            dateStr = row._normalized['date'] || '';
+        } else {
+            dateStr = row['Date'] || row['date'] || '';
+        }
         let rowDate = parseDate(dateStr);
 
         totalBalance += amount;
@@ -342,11 +445,13 @@ function updateTransactionsTable(data) {
     const categoryIcons = ['yellow', 'blue', 'red'];
 
     const transactionsHTML = recentTransactions.map((row, index) => {
-        const date = row['Date'] || row['date'] || '';
-        const expenseDesc = row['Expense description'] || row['Expense Description'] || '';
-        const accountName = row['Account Name'] || row['Account name'] || '';
-        const vendor = row['Vendor Name'] || row['vendor name'] || row['Vendor'] || '';
-        const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
+        // Use normalized lookups for all fields
+        const n = row._normalized || {};
+        const date = n['date'] || row['Date'] || row['date'] || '';
+        const expenseDesc = n['expensedescription'] || row['Expense description'] || row['Expense Description'] || '';
+        const accountName = n['accountname'] || row['Account Name'] || row['Account name'] || '';
+        const vendor = n['vendorname'] || n['vendor'] || row['Vendor Name'] || row['vendor name'] || row['Vendor'] || '';
+        const amount = n['amtwvat'] || n['amount'] || row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
         const category = getExpenseCategory(accountName);
 
         const formattedDate = formatDate(date);
@@ -417,30 +522,66 @@ const costCenterColors = [
     '#00ACC1', '#F5A623', '#E8721C', '#8B4513', '#D0021B'
 ];
 
-// Normalize a header/key string for comparison (lowercase, trim, remove extra spaces)
+// Normalize a header/key string for comparison
+// Removes ALL non-alphanumeric characters and converts to lowercase
+// Examples: "Cost Center", "Cost Center ", "cost center", "COST CENTER", "Cost_Center" -> "costcenter"
 function normalizeKey(key) {
     if (!key) return '';
-    return key.toString().toLowerCase().trim().replace(/\s+/g, ' ');
+    return key.toString()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, ''); // Remove ALL non-alphanumeric characters
 }
 
-// Get value from row by trying normalized key matching
+// Standard normalized key names for common columns
+const NORMALIZED_KEYS = {
+    costcenter: 'costcenter',
+    accountname: 'accountname',
+    amtwvat: 'amtwvat',
+    amtwithvat: 'amtwvat',
+    amount: 'amount',
+    date: 'date',
+    expensedescription: 'expensedescription',
+    vendorname: 'vendorname',
+    vendor: 'vendor',
+    cluster: 'cluster'
+};
+
+// Get value from row using normalized key lookup
+// Row data now includes _normalized object with normalized keys
 function getRowValue(row, targetKeys) {
-    // targetKeys is an array of possible key names to try
-    // First, try exact matches
+    if (!row || typeof row !== 'object') return null;
+
+    // If row has _normalized data, use it for fast lookup
+    if (row._normalized) {
+        for (const key of targetKeys) {
+            const normKey = normalizeKey(key);
+            if (row._normalized[normKey] !== undefined && row._normalized[normKey] !== null && row._normalized[normKey] !== '') {
+                return row._normalized[normKey];
+            }
+        }
+    }
+
+    // Fallback: try exact matches on original keys
     for (const key of targetKeys) {
         if (row[key] !== undefined && row[key] !== null && row[key] !== '') {
             return row[key];
         }
     }
 
-    // Then, try normalized matching against all row keys
+    // Fallback: try normalized matching against all row keys
     const normalizedTargets = targetKeys.map(k => normalizeKey(k));
-    for (const rowKey of Object.keys(row)) {
+    const rowKeys = Object.keys(row).filter(k => k !== '_normalized');
+
+    for (const rowKey of rowKeys) {
         const normalizedRowKey = normalizeKey(rowKey);
+        if (!normalizedRowKey) continue;
+
         for (const target of normalizedTargets) {
-            if (normalizedRowKey === target || normalizedRowKey.includes(target) || target.includes(normalizedRowKey)) {
-                if (row[rowKey] !== undefined && row[rowKey] !== null && row[rowKey] !== '') {
-                    return row[rowKey];
+            if (!target) continue;
+            if (normalizedRowKey === target) {
+                const value = row[rowKey];
+                if (value !== undefined && value !== null && value !== '') {
+                    return value;
                 }
             }
         }
@@ -466,22 +607,22 @@ function getCostCenterDisplayName(costCenterStr) {
 
 // Get cost center from row data with fallback to cluster config
 function getCostCenterFromRow(row) {
-    // Use normalized lookup for Cost Center column
-    const costCenterStr = getRowValue(row, [
-        'Cost Center',
-        'Cost center',
-        'cost center',
-        'COST CENTER',
-        'CostCenter',
-        'costcenter',
-        'Cost Center Name',
-        'cost_center',
-        'cost-center'
-    ]);
+    // Direct normalized lookup - "costcenter" matches "Cost Center", "Cost Center ", "cost center", etc.
+    let costCenterStr = null;
 
-    // Debug: Log what we found
+    // First try direct normalized lookup (fastest)
+    if (row._normalized) {
+        costCenterStr = row._normalized['costcenter'] || row._normalized['costcentername'] || null;
+    }
+
+    // Fallback to getRowValue for edge cases
     if (!costCenterStr) {
-        console.log('Cost Center not found in row. Row keys:', Object.keys(row));
+        costCenterStr = getRowValue(row, ['Cost Center', 'costcenter']);
+    }
+
+    // Debug: Log what we found (only on first few rows to avoid spam)
+    if (!costCenterStr && row._normalized) {
+        console.log('Cost Center not found. Normalized keys available:', Object.keys(row._normalized));
     }
 
     // If found, use it
@@ -524,12 +665,19 @@ function updateBreakdownChart(data) {
     // Group data by cost center
     const costCenters = {};
 
-    // Debug: Log first row to see actual column names
+    // Debug: Log first row to see actual column names and normalized keys
     if (data.length > 0) {
-        console.log('========== ROW KEYS FOR DEBUGGING ==========');
-        console.log('Available columns:', Object.keys(data[0]));
-        console.log('First row data:', data[0]);
-        console.log('=============================================');
+        console.log('========== BREAKDOWN CHART DEBUG ==========');
+        console.log('Total rows to process:', data.length);
+        console.log('Original columns:', Object.keys(data[0]).filter(k => k !== '_normalized'));
+        console.log('Normalized keys:', data[0]._normalized ? Object.keys(data[0]._normalized) : 'NONE');
+        console.log('Cost Center value (normalized):', data[0]._normalized ? data[0]._normalized['costcenter'] : 'N/A');
+        console.log('Amount value (normalized):', data[0]._normalized ? (data[0]._normalized['amtwvat'] || data[0]._normalized['amount']) : 'N/A');
+        console.log('============================================');
+    } else {
+        console.log('========== BREAKDOWN CHART DEBUG ==========');
+        console.log('WARNING: No data to process for breakdown chart!');
+        console.log('============================================');
     }
 
     data.forEach(row => {
@@ -537,12 +685,26 @@ function updateBreakdownChart(data) {
         const costCenterCode = costCenterInfo.code;
         const costCenterName = costCenterInfo.name;
 
-        // Use normalized lookup for amount
-        const amountRaw = getRowValue(row, ['AMT W/ VAt', 'AMT W/ VAT', 'Amount', 'amount', 'AMOUNT', 'Amount with VAT', 'Amount With VAT']);
+        // Use direct normalized lookup for amount (faster and more reliable)
+        let amountRaw = null;
+        if (row._normalized) {
+            // Try common normalized keys for amount
+            amountRaw = row._normalized['amtwvat'] || row._normalized['amtwithvat'] ||
+                        row._normalized['amount'] || row._normalized['amountwithvat'] || null;
+        }
+        if (!amountRaw) {
+            amountRaw = getRowValue(row, ['AMT W/ VAt', 'AMT W/ VAT', 'Amount']);
+        }
         const amount = parseFloat(amountRaw || 0) || 0;
 
-        // Use normalized lookup for account name
-        const accountName = getRowValue(row, ['Account Name', 'Account name', 'account name', 'ACCOUNT NAME', 'AccountName']) || 'Other';
+        // Use direct normalized lookup for account name
+        let accountName = null;
+        if (row._normalized) {
+            accountName = row._normalized['accountname'] || null;
+        }
+        if (!accountName) {
+            accountName = getRowValue(row, ['Account Name', 'AccountName']) || 'Other';
+        }
         const category = getExpenseCategory(accountName);
 
         if (!costCenters[costCenterCode]) {
@@ -899,20 +1061,28 @@ function updateClusterSummary(data, stats) {
     const avg = stats.transactionCount > 0 ? stats.totalBalance / stats.transactionCount : 0;
     document.getElementById('avg-transaction').textContent = '₱' + Math.round(avg).toLocaleString('en-PH');
 
-    // Top category
-    if (chartCategories.length > 0) {
-        document.getElementById('top-category').textContent = chartCategories[0].name;
+    // Top category - reset if no data
+    const topCategoryEl = document.getElementById('top-category');
+    if (topCategoryEl) {
+        topCategoryEl.textContent = chartCategories.length > 0 ? chartCategories[0].name : 'N/A';
     }
 
-    // Last update
-    if (data.length > 0) {
-        const lastDate = data.reduce((latest, row) => {
-            const date = parseDate(row['Date'] || row['date'] || '');
-            return date > latest ? date : latest;
-        }, new Date(0));
+    // Last update - reset if no data
+    const lastUpdateEl = document.getElementById('last-update');
+    if (lastUpdateEl) {
+        if (data.length > 0) {
+            const lastDate = data.reduce((latest, row) => {
+                const date = parseDate(row['Date'] || row['date'] || '');
+                return date > latest ? date : latest;
+            }, new Date(0));
 
-        if (lastDate.getTime() > 0) {
-            document.getElementById('last-update').textContent = lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (lastDate.getTime() > 0) {
+                lastUpdateEl.textContent = lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } else {
+                lastUpdateEl.textContent = 'N/A';
+            }
+        } else {
+            lastUpdateEl.textContent = 'N/A';
         }
     }
 }
@@ -1224,9 +1394,10 @@ function displayAllTransactions() {
 
     if (searchTerm) {
         filteredTransactions = filteredTransactions.filter(row => {
-            const expenseDesc = (row['Expense description'] || '').toLowerCase();
-            const accountName = (row['Account Name'] || '').toLowerCase();
-            const vendor = (row['vendor name'] || '').toLowerCase();
+            const n = row._normalized || {};
+            const expenseDesc = (n['expensedescription'] || row['Expense description'] || '').toLowerCase();
+            const accountName = (n['accountname'] || row['Account Name'] || '').toLowerCase();
+            const vendor = (n['vendorname'] || n['vendor'] || row['vendor name'] || '').toLowerCase();
 
             return expenseDesc.includes(searchTerm) ||
                    accountName.includes(searchTerm) ||
@@ -1242,11 +1413,13 @@ function displayAllTransactions() {
     }
 
     const transactionsHTML = filteredTransactions.map((row) => {
-        const date = row['Date'] || row['date'] || '';
-        const expenseDesc = row['Expense description'] || row['Expense Description'] || '';
-        const accountName = row['Account Name'] || row['Account name'] || '';
-        const vendor = row['Vendor Name'] || row['vendor name'] || row['Vendor'] || '';
-        const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
+        // Use normalized lookups
+        const n = row._normalized || {};
+        const date = n['date'] || row['Date'] || row['date'] || '';
+        const expenseDesc = n['expensedescription'] || row['Expense description'] || row['Expense Description'] || '';
+        const accountName = n['accountname'] || row['Account Name'] || row['Account name'] || '';
+        const vendor = n['vendorname'] || n['vendor'] || row['Vendor Name'] || row['vendor name'] || row['Vendor'] || '';
+        const amount = n['amtwvat'] || n['amount'] || row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
         const category = getExpenseCategory(accountName);
 
         const formattedDate = formatDate(date);
