@@ -23,6 +23,14 @@ let allClusterData = {};  // Stores data per cluster
 let clusterTotals = {};   // Stores totals per cluster
 let lastFetchTime = null;
 
+// Normalize header key for consistent matching across different sheet formats
+function normalizeKey(key) {
+    if (!key) return '';
+    return key.toString()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, ''); // Remove ALL non-alphanumeric characters
+}
+
 // Fetch data from a single Google Sheet
 async function fetchSingleSheet(sheetId) {
     const cacheBuster = new Date().getTime();
@@ -42,13 +50,28 @@ async function fetchSingleSheet(sheetId) {
 
     return rows.map(row => {
         const rowData = {};
+        const normalizedData = {}; // Store normalized key -> value for fast lookup
+
         row.c.forEach((cell, index) => {
             const header = headers[index] || `col${index}`;
-            rowData[header] = cell ? (cell.v !== null ? cell.v : '') : '';
+            const value = cell ? (cell.v !== null ? cell.v : '') : '';
+
+            // Store with original key
+            rowData[header] = value;
+
+            // Store with normalized key for consistent matching
+            const normKey = normalizeKey(header);
+            if (normKey) {
+                normalizedData[normKey] = value;
+            }
+
             if (cell && cell.f) {
                 rowData[header + '_formatted'] = cell.f;
             }
         });
+
+        // Attach normalized data for fast lookup
+        rowData._normalized = normalizedData;
         return rowData;
     });
 }
@@ -93,13 +116,24 @@ async function fetchSheetData() {
             let categories = {};
 
             data.forEach(row => {
-                const amount = parseFloat(
-                    row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0
-                ) || 0;
+                // Use normalized lookup for amount (handles different header formats)
+                let amountRaw = 0;
+                if (row._normalized) {
+                    amountRaw = row._normalized['amtwvat'] || row._normalized['amtwithvat'] ||
+                                row._normalized['amount'] || row._normalized['amountwithvat'] || 0;
+                } else {
+                    amountRaw = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
+                }
+                const amount = parseFloat(amountRaw) || 0;
                 total += amount;
 
-                // Group by account name for breakdown
-                const accountName = row['Account Name'] || row['Account name'] || 'Other';
+                // Group by account name for breakdown (use normalized lookup)
+                let accountName = 'Other';
+                if (row._normalized) {
+                    accountName = row._normalized['accountname'] || 'Other';
+                } else {
+                    accountName = row['Account Name'] || row['Account name'] || 'Other';
+                }
                 const category = getExpenseCategory(accountName);
                 if (!categories[category]) {
                     categories[category] = { total: 0, count: 0 };
@@ -387,22 +421,23 @@ function calculateStats(data) {
     let thisYear = 0;
 
     data.forEach(row => {
-        // Try to get amount from various possible column names
-        // Your sheet uses "AMT W/ VAt" as the column name
-        const amount = parseFloat(
-            row['AMT W/ VAt'] ||
-            row['AMT W/ VAT'] ||
-            row['AMT W/ Vat'] ||
-            row['AMOUNT WITH VAT'] ||
-            row['Amount'] ||
-            row['amount'] ||
-            row['AMOUNT'] ||
-            row['Amount with VAT'] ||
-            0
-        ) || 0;
+        // Use normalized lookup for amount (handles different header formats)
+        let amountRaw = 0;
+        if (row._normalized) {
+            amountRaw = row._normalized['amtwvat'] || row._normalized['amtwithvat'] ||
+                        row._normalized['amount'] || row._normalized['amountwithvat'] || 0;
+        } else {
+            amountRaw = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
+        }
+        const amount = parseFloat(amountRaw) || 0;
 
-        // Try to get date from various possible column names
-        const dateStr = row['Date'] || row['date'] || row['DATE'] || '';
+        // Use normalized lookup for date
+        let dateStr = '';
+        if (row._normalized) {
+            dateStr = row._normalized['date'] || '';
+        } else {
+            dateStr = row['Date'] || row['date'] || row['DATE'] || '';
+        }
         let rowDate;
 
         if (dateStr) {
@@ -499,17 +534,18 @@ function updateTransactionsTable(data) {
     const transactionsHTML = recentTransactions.map((row, index) => {
         // Log first row to see actual keys
         if (index === 0) {
-            console.log('Row keys:', Object.keys(row));
-            console.log('First row data:', row);
+            console.log('Row keys:', Object.keys(row).filter(k => k !== '_normalized'));
+            console.log('Normalized keys:', row._normalized ? Object.keys(row._normalized) : 'N/A');
         }
 
-        // Get values matching your Google Sheet column names
-        const date = row['Date'] || row['date'] || row['DATE'] || '';
-        const cluster = row['Cluster'] || row['cluster'] || '';
-        const expenseDesc = row['Expense description'] || row['Expense Description'] || row['expense description'] || '';
-        const accountName = row['Account Name'] || row['Account name'] || row['account name'] || '';
-        const vendor = row['vendor name'] || row['Vendor'] || row['vendor'] || row['Submitted'] || '';
-        const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['AMOUNT WITH VAT'] || row['Amount'] || 0;
+        // Use normalized lookups for all fields
+        const n = row._normalized || {};
+        const date = n['date'] || row['Date'] || row['date'] || '';
+        const cluster = n['cluster'] || row['Cluster'] || row['cluster'] || '';
+        const expenseDesc = n['expensedescription'] || row['Expense description'] || row['Expense Description'] || '';
+        const accountName = n['accountname'] || row['Account Name'] || row['Account name'] || '';
+        const vendor = n['vendorname'] || n['vendor'] || row['vendor name'] || row['Vendor'] || row['Submitted'] || '';
+        const amount = n['amtwvat'] || n['amtwithvat'] || n['amount'] || row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
 
         // Format date
         let formattedDate = '';
@@ -581,8 +617,11 @@ function updateBreakdownChart(data) {
     const categories = {};
 
     data.forEach(row => {
-        const accountName = row['Account Name'] || row['Account name'] || 'Other';
-        const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0) || 0;
+        // Use normalized lookups
+        const n = row._normalized || {};
+        const accountName = n['accountname'] || row['Account Name'] || row['Account name'] || 'Other';
+        const amountRaw = n['amtwvat'] || n['amtwithvat'] || n['amount'] || row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
+        const amount = parseFloat(amountRaw) || 0;
 
         // Simplify category name
         let category = 'Other';
@@ -1123,9 +1162,11 @@ function showCostCenterExpenses(centerKey) {
             listEl.innerHTML = '<div class="loading-message">No transactions found</div>';
         } else {
             listEl.innerHTML = recentTransactions.map(row => {
-                const desc = row['Expense description'] || row['Expense Description'] || 'No description';
-                const amount = parseFloat(row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0) || 0;
-                const date = formatTransactionDate(row['Date'] || row['date'] || '');
+                const n = row._normalized || {};
+                const desc = n['expensedescription'] || row['Expense description'] || row['Expense Description'] || 'No description';
+                const amountRaw = n['amtwvat'] || n['amtwithvat'] || n['amount'] || row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
+                const amount = parseFloat(amountRaw) || 0;
+                const date = formatTransactionDate(n['date'] || row['Date'] || row['date'] || '');
                 return `
                     <div class="expense-item">
                         <div class="expense-info">
@@ -1848,13 +1889,14 @@ function displayAllTransactions() {
     }
 
     const transactionsHTML = filteredTransactions.map((row) => {
-        // Get values matching Google Sheet column names
-        const date = row['Date'] || row['date'] || row['DATE'] || '';
-        const cluster = row['Cluster'] || row['cluster'] || '';
-        const expenseDesc = row['Expense description'] || row['Expense Description'] || row['expense description'] || '';
-        const accountName = row['Account Name'] || row['Account name'] || row['account name'] || '';
-        const vendor = row['vendor name'] || row['Vendor'] || row['vendor'] || row['Submitted'] || '';
-        const amount = row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['AMOUNT WITH VAT'] || row['Amount'] || 0;
+        // Use normalized lookups for all fields
+        const n = row._normalized || {};
+        const date = n['date'] || row['Date'] || row['date'] || '';
+        const cluster = n['cluster'] || row['Cluster'] || row['cluster'] || '';
+        const expenseDesc = n['expensedescription'] || row['Expense description'] || row['Expense Description'] || '';
+        const accountName = n['accountname'] || row['Account Name'] || row['Account name'] || '';
+        const vendor = n['vendorname'] || n['vendor'] || row['vendor name'] || row['Vendor'] || row['Submitted'] || '';
+        const amount = n['amtwvat'] || n['amtwithvat'] || n['amount'] || row['AMT W/ VAt'] || row['AMT W/ VAT'] || row['Amount'] || 0;
 
         // Format date
         let formattedDate = 'N/A';
