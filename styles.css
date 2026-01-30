@@ -56,35 +56,13 @@ body {
     overflow: hidden;
 }
 
-.sidebar-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(180deg, #C41E3A, #FFD700);
-    border-radius: 0 4px 4px 0;
-    transform: scaleY(0);
-    transition: transform 0.3s ease;
-}
-
 .sidebar-item:hover {
-    background: rgba(255, 217, 61, 0.3);
-    transform: translateX(5px);
-}
-
-.sidebar-item:hover::before {
-    transform: scaleY(1);
+    background: rgba(0, 0, 0, 0.04);
 }
 
 .sidebar-item.active {
-    background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(255, 217, 61, 0.2) 100%);
-    color: #C41E3A;
-}
-
-.sidebar-item.active::before {
-    transform: scaleY(1);
+    background: rgba(0, 0, 0, 0.06);
+    color: #5C3317;
 }
 
 .sidebar-icon {
@@ -94,24 +72,37 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: rgba(255, 217, 61, 0.3);
     transition: all 0.3s ease;
 }
 
-.sidebar-item:hover .sidebar-icon,
-.sidebar-item.active .sidebar-icon {
-    background: linear-gradient(135deg, #FFD93D 0%, #FFA500 100%);
-    box-shadow: 0 4px 12px rgba(255, 217, 61, 0.4);
+.icon-emoji {
+    font-size: 18px;
+    line-height: 1;
 }
 
-.sidebar-icon svg {
-    stroke: #8B4513;
-    transition: stroke 0.3s ease;
+/* Dashboard icon - yellow/gold background */
+.sidebar-icon.icon-dashboard {
+    background: linear-gradient(135deg, #FFE082 0%, #FFD54F 100%);
 }
 
-.sidebar-item:hover .sidebar-icon svg,
-.sidebar-item.active .sidebar-icon svg {
-    stroke: #C41E3A;
+/* Reports icon - red background */
+.sidebar-icon.icon-reports {
+    background: linear-gradient(135deg, #EF9A9A 0%, #E57373 100%);
+}
+
+/* Scaler Data icon - pink/coral background */
+.sidebar-icon.icon-scaler {
+    background: linear-gradient(135deg, #F8BBD9 0%, #F48FB1 100%);
+}
+
+/* Clusters icon - pink/red background */
+.sidebar-icon.icon-clusters {
+    background: linear-gradient(135deg, #FFAB91 0%, #FF8A65 100%);
+}
+
+.sidebar-item:hover .sidebar-icon {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-text {
