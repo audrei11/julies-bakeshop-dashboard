@@ -11,10 +11,166 @@ body {
     padding: 20px;
 }
 
+/* App Layout with Sidebar */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 220px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 249, 230, 0.98) 100%);
+    border-radius: 20px;
+    margin: 10px;
+    padding: 20px 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 10px;
+    height: fit-content;
+    max-height: calc(100vh - 20px);
+    z-index: 100;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #5C3317;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #C41E3A, #FFD700);
+    border-radius: 0 4px 4px 0;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.sidebar-item:hover {
+    background: rgba(255, 217, 61, 0.3);
+    transform: translateX(5px);
+}
+
+.sidebar-item:hover::before {
+    transform: scaleY(1);
+}
+
+.sidebar-item.active {
+    background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(255, 217, 61, 0.2) 100%);
+    color: #C41E3A;
+}
+
+.sidebar-item.active::before {
+    transform: scaleY(1);
+}
+
+.sidebar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 217, 61, 0.3);
+    transition: all 0.3s ease;
+}
+
+.sidebar-item:hover .sidebar-icon,
+.sidebar-item.active .sidebar-icon {
+    background: linear-gradient(135deg, #FFD93D 0%, #FFA500 100%);
+    box-shadow: 0 4px 12px rgba(255, 217, 61, 0.4);
+}
+
+.sidebar-icon svg {
+    stroke: #8B4513;
+    transition: stroke 0.3s ease;
+}
+
+.sidebar-item:hover .sidebar-icon svg,
+.sidebar-item.active .sidebar-icon svg {
+    stroke: #C41E3A;
+}
+
+.sidebar-text {
+    flex: 1;
+    white-space: nowrap;
+}
+
+/* Mobile Sidebar Toggle */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 200;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #FFD93D;
+    transform: scale(1.05);
+}
+
+.sidebar-toggle svg {
+    stroke: #5C3317;
+}
+
+/* Mobile Sidebar Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
 .dashboard {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
+    flex: 1;
 }
 
 /* Header Styles */
@@ -1405,6 +1561,20 @@ body {
 
 /* Large tablets and small desktops */
 @media (max-width: 1200px) {
+    .sidebar {
+        width: 200px;
+    }
+
+    .sidebar-item {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+
+    .sidebar-icon {
+        width: 32px;
+        height: 32px;
+    }
+
     .stats-container {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1424,12 +1594,38 @@ body {
 
 /* Tablets */
 @media (max-width: 768px) {
+    /* Sidebar responsive - hide on tablets/mobile */
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        height: 100vh;
+        max-height: 100vh;
+        margin: 0;
+        border-radius: 0 20px 20px 0;
+        z-index: 150;
+        transition: left 0.3s ease;
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+
+    .sidebar-toggle {
+        display: flex;
+    }
+
+    .app-layout {
+        flex-direction: column;
+    }
+
     body {
         padding: 10px;
     }
 
     .dashboard {
         padding: 10px;
+        padding-top: 70px; /* Space for toggle button */
     }
 
     .header {
@@ -1934,6 +2130,110 @@ body {
         top: 10px;
         font-size: 11px;
         padding: 8px 15px;
+    }
+}
+
+/* Scaler Page Placeholder Styles */
+.scaler-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.placeholder-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 24px;
+    padding: 60px 80px;
+    text-align: center;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+    max-width: 600px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.placeholder-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 30px;
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFE566 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(255, 217, 61, 0.4);
+}
+
+.placeholder-icon svg {
+    stroke: #C41E3A;
+}
+
+.placeholder-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #5C3317;
+    margin-bottom: 15px;
+}
+
+.placeholder-text {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.placeholder-subtext {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.back-to-dashboard-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #C41E3A 0%, #8B0000 100%);
+    color: white;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(196, 30, 58, 0.3);
+}
+
+.back-to-dashboard-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(196, 30, 58, 0.4);
+}
+
+@media (max-width: 768px) {
+    .placeholder-section {
+        padding: 40px 30px;
+        margin: 0 15px;
+    }
+
+    .placeholder-icon {
+        width: 100px;
+        height: 100px;
+    }
+
+    .placeholder-icon svg {
+        width: 60px;
+        height: 60px;
+    }
+
+    .placeholder-title {
+        font-size: 24px;
+    }
+
+    .placeholder-text {
+        font-size: 14px;
+    }
+
+    .placeholder-subtext {
+        font-size: 13px;
     }
 }
 
