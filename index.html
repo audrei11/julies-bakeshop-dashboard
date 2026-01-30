@@ -122,6 +122,16 @@
                 <div class="card-diamond top-left"></div>
                 <div class="card-diamond bottom-right"></div>
             </div>
+            <div class="stat-card budget-card">
+                <div class="stat-label">Current Budget</div>
+                <div class="stat-value" id="current-budget">Not Set</div>
+                <div class="stat-change neutral" id="budget-status">
+                    <span class="change-icon">📋</span>
+                    <span>All Clusters</span>
+                </div>
+                <div class="card-diamond top-left"></div>
+                <div class="card-diamond bottom-right"></div>
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -150,9 +160,13 @@
                     </div>
                 </div>
                 <div class="button-group">
-                    <button class="set-budget-btn">
+                    <button class="set-budget-btn" id="set-budget-btn">
                         <span class="budget-icon">📁</span>
                         Set Budget
+                    </button>
+                    <button class="replenish-btn" id="replenish-btn">
+                        <span class="replenish-icon">🔄</span>
+                        Replenish
                     </button>
                     <button class="add-pcf-btn" id="add-pcf-btn">
                         <span class="pcf-icon">➕</span>
@@ -239,6 +253,26 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Budget Modal -->
+    <div class="modal-overlay" id="budget-modal">
+        <div class="modal-content budget-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Set Budget</h2>
+                <p class="modal-subtitle">Set budget for all clusters</p>
+                <button class="modal-close" id="budget-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="budget-form">
+                    <div class="form-group">
+                        <label class="form-label">Budget Amount (₱)</label>
+                        <input type="number" step="0.01" min="0" class="form-input" id="budget-amount" placeholder="Enter budget amount" required>
+                    </div>
+                    <button type="submit" class="form-submit-btn">Save Budget</button>
+                </form>
             </div>
         </div>
     </div>

@@ -1586,6 +1586,123 @@ suggestionBtns.forEach(btn => {
     });
 });
 
+// ==================== BUDGET MANAGEMENT ====================
+
+// Get budget storage key for current cluster
+function getBudgetStorageKey() {
+    return 'julies_budget_' + currentCluster.key;
+}
+
+// Get budget elements
+const setBudgetBtn = document.getElementById('set-budget-btn');
+const replenishBtn = document.getElementById('replenish-btn');
+const budgetModal = document.getElementById('budget-modal');
+const budgetModalClose = document.getElementById('budget-modal-close');
+const budgetForm = document.getElementById('budget-form');
+const budgetAmountInput = document.getElementById('budget-amount');
+const currentBudgetDisplay = document.getElementById('current-budget');
+const budgetClusterLabel = document.getElementById('budget-cluster-label');
+const budgetModalSubtitle = document.getElementById('budget-modal-subtitle');
+
+// Load saved budget on page load
+function loadSavedBudget() {
+    const storageKey = getBudgetStorageKey();
+    const savedBudget = localStorage.getItem(storageKey);
+    if (savedBudget) {
+        const budgetData = JSON.parse(savedBudget);
+        updateBudgetDisplay(budgetData.amount);
+    }
+    // Update cluster label
+    if (budgetClusterLabel && currentCluster.name) {
+        budgetClusterLabel.textContent = currentCluster.name;
+    }
+    // Update modal subtitle
+    if (budgetModalSubtitle && currentCluster.name) {
+        budgetModalSubtitle.textContent = 'Set budget for ' + currentCluster.name;
+    }
+}
+
+// Update budget display
+function updateBudgetDisplay(amount) {
+    if (currentBudgetDisplay) {
+        if (amount && amount > 0) {
+            currentBudgetDisplay.textContent = '₱' + parseFloat(amount).toLocaleString('en-PH');
+        } else {
+            currentBudgetDisplay.textContent = 'Not Set';
+        }
+    }
+}
+
+// Save budget to localStorage
+function saveBudget(amount) {
+    const storageKey = getBudgetStorageKey();
+    const budgetData = {
+        amount: amount,
+        updatedAt: new Date().toISOString(),
+        cluster: currentCluster.key
+    };
+    localStorage.setItem(storageKey, JSON.stringify(budgetData));
+    updateBudgetDisplay(amount);
+}
+
+// Open budget modal
+if (setBudgetBtn) {
+    setBudgetBtn.addEventListener('click', () => {
+        // Pre-fill with current budget if exists
+        const storageKey = getBudgetStorageKey();
+        const savedBudget = localStorage.getItem(storageKey);
+        if (savedBudget) {
+            const budgetData = JSON.parse(savedBudget);
+            if (budgetAmountInput) {
+                budgetAmountInput.value = budgetData.amount;
+            }
+        }
+        budgetModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    });
+}
+
+// Close budget modal
+if (budgetModalClose) {
+    budgetModalClose.addEventListener('click', () => {
+        budgetModal.classList.remove('active');
+        document.body.style.overflow = '';
+    });
+}
+
+// Close modal when clicking outside
+if (budgetModal) {
+    budgetModal.addEventListener('click', (e) => {
+        if (e.target === budgetModal) {
+            budgetModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+}
+
+// Handle budget form submission
+if (budgetForm) {
+    budgetForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const amount = parseFloat(budgetAmountInput.value);
+        if (amount && amount > 0) {
+            saveBudget(amount);
+            alert('Budget saved successfully for ' + currentCluster.name + '!');
+            budgetModal.classList.remove('active');
+            document.body.style.overflow = '';
+        } else {
+            alert('Please enter a valid budget amount.');
+        }
+    });
+}
+
+// Replenish button - placeholder (no function yet)
+if (replenishBtn) {
+    replenishBtn.addEventListener('click', () => {
+        alert('Replenish feature coming soon!');
+    });
+}
+
 // ==================== INITIALIZATION ====================
 
 // Only initialize if we're on the cluster page (check for key element)
@@ -1602,6 +1719,7 @@ function initClusterPage() {
         initializeClusterUI();
         drawDonutChart();
         fetchSheetData();
+        loadSavedBudget();
     });
 
     // Setup event handlers

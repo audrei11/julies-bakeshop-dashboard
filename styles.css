@@ -441,7 +441,7 @@ body {
 /* Stats Container */
 .stats-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 20px;
     margin-bottom: 30px;
 }
@@ -522,8 +522,22 @@ body {
     color: #C62828;
 }
 
+.stat-change.neutral {
+    background: rgba(139, 115, 85, 0.15);
+    color: #8B7355;
+}
+
 .change-icon {
     font-size: 12px;
+}
+
+/* Budget Card Specific */
+.stat-card.budget-card {
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFE4B5 100%);
+}
+
+.stat-card.budget-card::before {
+    background: linear-gradient(90deg, #C41E3A, #FF6B6B);
 }
 
 /* Main Content */
@@ -753,6 +767,7 @@ body {
 }
 
 .set-budget-btn,
+.replenish-btn,
 .add-pcf-btn {
     display: flex;
     align-items: center;
@@ -772,6 +787,10 @@ body {
     background: #C41E3A;
 }
 
+.replenish-btn {
+    background: #2E7D32;
+}
+
 .add-pcf-btn {
     background: #F5A623;
 }
@@ -782,6 +801,12 @@ body {
     box-shadow: 0 5px 15px rgba(196, 30, 58, 0.3);
 }
 
+.replenish-btn:hover {
+    background: #1B5E20;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+}
+
 .add-pcf-btn:hover {
     background: #D4891A;
     transform: translateY(-2px);
@@ -789,6 +814,7 @@ body {
 }
 
 .budget-icon,
+.replenish-icon,
 .pcf-icon {
     font-size: 16px;
 }
