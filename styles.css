@@ -16,93 +16,87 @@ body {
     display: flex;
     min-height: 100vh;
     position: relative;
+    gap: 0;
 }
 
-/* Sidebar Styles */
+/* Sidebar Styles - Floating Card Design */
 .sidebar {
-    width: 220px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 249, 230, 0.98) 100%);
-    border-radius: 20px;
-    margin: 10px;
-    padding: 20px 15px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    width: 180px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    margin: 20px 0 20px 20px;
+    padding: 16px 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     position: sticky;
-    top: 10px;
+    top: 20px;
     height: fit-content;
-    max-height: calc(100vh - 20px);
+    max-height: calc(100vh - 40px);
     z-index: 100;
-    border: 1px solid rgba(255, 215, 0, 0.2);
     flex-shrink: 0;
+    align-self: flex-start;
 }
 
 .sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .sidebar-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    border-radius: 12px;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
     text-decoration: none;
     color: #5C3317;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    transition: all 0.2s ease;
 }
 
 .sidebar-item:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: rgba(255, 217, 61, 0.15);
 }
 
 .sidebar-item.active {
-    background: rgba(0, 0, 0, 0.06);
-    color: #5C3317;
+    background: rgba(255, 217, 61, 0.25);
 }
 
+/* Sidebar Icons - Rounded colored backgrounds */
 .sidebar-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    transition: all 0.3s ease;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .icon-emoji {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
 }
 
 /* Dashboard icon - yellow/gold background */
 .sidebar-icon.icon-dashboard {
-    background: linear-gradient(135deg, #FFE082 0%, #FFD54F 100%);
+    background: linear-gradient(135deg, #FFF3C4 0%, #FFE082 100%);
 }
 
-/* Reports icon - red background */
+/* Reports icon - red/coral background */
 .sidebar-icon.icon-reports {
-    background: linear-gradient(135deg, #EF9A9A 0%, #E57373 100%);
+    background: linear-gradient(135deg, #FFCDD2 0%, #EF9A9A 100%);
 }
 
-/* Scaler Data icon - pink/coral background */
+/* Scaler Data icon - pink background */
 .sidebar-icon.icon-scaler {
-    background: linear-gradient(135deg, #F8BBD9 0%, #F48FB1 100%);
+    background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD9 100%);
 }
 
-/* Clusters icon - pink/red background */
+/* Clusters icon - peach/coral background */
 .sidebar-icon.icon-clusters {
-    background: linear-gradient(135deg, #FFAB91 0%, #FF8A65 100%);
-}
-
-.sidebar-item:hover .sidebar-icon {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #FFCCBC 0%, #FFAB91 100%);
 }
 
 .sidebar-text {
@@ -117,8 +111,8 @@ body {
     top: 20px;
     left: 20px;
     z-index: 200;
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.95);
     border: none;
@@ -131,7 +125,6 @@ body {
 
 .sidebar-toggle:hover {
     background: #FFD93D;
-    transform: scale(1.05);
 }
 
 .sidebar-toggle svg {
@@ -1553,17 +1546,24 @@ body {
 /* Large tablets and small desktops */
 @media (max-width: 1200px) {
     .sidebar {
-        width: 200px;
+        width: 170px;
+        margin: 15px 0 15px 15px;
+        padding: 14px 10px;
     }
 
     .sidebar-item {
-        padding: 12px 14px;
-        font-size: 13px;
+        padding: 8px 10px;
+        font-size: 12px;
+        gap: 8px;
     }
 
     .sidebar-icon {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .icon-emoji {
+        font-size: 14px;
     }
 
     .stats-container {
@@ -1588,14 +1588,17 @@ body {
     /* Sidebar responsive - hide on tablets/mobile */
     .sidebar {
         position: fixed;
-        left: -280px;
+        left: -220px;
         top: 0;
+        width: 200px;
         height: 100vh;
         max-height: 100vh;
         margin: 0;
-        border-radius: 0 20px 20px 0;
+        padding: 20px 15px;
+        border-radius: 0 16px 16px 0;
         z-index: 150;
         transition: left 0.3s ease;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
     }
 
     .sidebar.active {
@@ -1616,7 +1619,7 @@ body {
 
     .dashboard {
         padding: 10px;
-        padding-top: 70px; /* Space for toggle button */
+        padding-top: 60px; /* Space for toggle button */
     }
 
     .header {
