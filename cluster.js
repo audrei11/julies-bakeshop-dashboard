@@ -1324,6 +1324,8 @@ if (addPcfBtn && pcfModal) {
 
                 if (response.ok) {
                     alert('PCF Entry submitted successfully!');
+                    // Deduct from active budget cycle
+                    deductFromBudget(formData.amount_with_vat);
                     pcfForm.reset();
                     document.getElementById('pcf-cluster').value = currentCluster.name;
                     // Refresh data after successful submission
@@ -1341,6 +1343,8 @@ if (addPcfBtn && pcfModal) {
         } else {
             // No webhook - just show success (for other clusters)
             alert('PCF Entry submitted successfully!');
+            // Deduct from active budget cycle
+            deductFromBudget(formData.amount_with_vat);
             pcfForm.reset();
             document.getElementById('pcf-cluster').value = currentCluster.name;
         }
@@ -1449,6 +1453,11 @@ document.addEventListener('keydown', (e) => {
         }
         if (transactionsModal && transactionsModal.classList.contains('active')) {
             transactionsModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        const budgetHistoryModal = document.getElementById('budget-history-modal');
+        if (budgetHistoryModal && budgetHistoryModal.classList.contains('active')) {
+            budgetHistoryModal.classList.remove('active');
             document.body.style.overflow = '';
         }
     }
@@ -1586,16 +1595,237 @@ suggestionBtns.forEach(btn => {
     });
 });
 
-// ==================== BUDGET MANAGEMENT ====================
+// ==================== BUDGET CYCLE MANAGEMENT ====================
 
-// Get budget storage key for current cluster
-function getBudgetStorageKey() {
-    return 'julies_budget_' + currentClusterKey;
+// Ledger storage key for current cluster
+function getLedgerStorageKey() {
+    return 'julies_budget_ledger_' + currentClusterKey;
 }
 
-// Get cycle storage key for current cluster
-function getCycleStorageKey() {
-    return 'julies_cycle_' + currentClusterKey;
+// Load ledger array from localStorage
+function loadLedger() {
+    try {
+        const raw = localStorage.getItem(getLedgerStorageKey());
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        }
+    } catch (e) {
+        console.error('Error loading ledger:', e);
+    }
+    return [];
+}
+
+// Save ledger array to localStorage
+function saveLedger(ledger) {
+    localStorage.setItem(getLedgerStorageKey(), JSON.stringify(ledger));
+}
+
+// Get the active cycle for this cluster (or null)
+function getActiveCycle() {
+    const ledger = loadLedger();
+    return ledger.find(r => r.status === 'active') || null;
+}
+
+// Format currency helper
+function formatBudgetCurrency(num) {
+    return '₱' + parseFloat(num).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+// Format date for display (YYYY-MM-DD → "Feb 8, 2026")
+function formatLedgerDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Get today as YYYY-MM-DD
+function getTodayDate() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// Start a new budget cycle
+function startBudgetCycle(amount) {
+    const ledger = loadLedger();
+    const existing = ledger.find(r => r.status === 'active');
+
+    if (existing) {
+        const ok = confirm(
+            'There is already an active cycle with ' + formatBudgetCurrency(existing.remaining) + ' remaining.\n\n' +
+            'Close it and start a new cycle?'
+        );
+        if (!ok) return false;
+        // Auto-close existing cycle
+        existing.status = 'closed';
+        existing.endDate = getTodayDate();
+        existing.closedAt = new Date().toISOString();
+    }
+
+    const newCycle = {
+        id: currentClusterKey + '_' + Date.now(),
+        cluster: currentClusterKey,
+        startDate: getTodayDate(),
+        endDate: null,
+        budget: amount,
+        expense: 0,
+        remaining: amount,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        closedAt: null
+    };
+
+    ledger.push(newCycle);
+    saveLedger(ledger);
+    updateBudgetDashboard();
+    return true;
+}
+
+// Deduct an amount from the active cycle (called after PCF submit)
+function deductFromBudget(amount) {
+    if (!amount || amount <= 0) return;
+    const ledger = loadLedger();
+    const active = ledger.find(r => r.status === 'active');
+    if (!active) return; // No active cycle — silently skip
+
+    active.expense += amount;
+    active.remaining = active.budget - active.expense;
+    saveLedger(ledger);
+    updateBudgetDashboard();
+}
+
+// Close the active budget cycle (Replenish)
+function closeBudgetCycle() {
+    const active = getActiveCycle();
+    if (!active) {
+        alert('No active budget cycle to close.');
+        return;
+    }
+
+    const ok = confirm(
+        'Close this budget cycle?\n\n' +
+        'Budget: ' + formatBudgetCurrency(active.budget) + '\n' +
+        'Spent: ' + formatBudgetCurrency(active.expense) + '\n' +
+        'Remaining: ' + formatBudgetCurrency(active.remaining)
+    );
+    if (!ok) return;
+
+    const ledger = loadLedger();
+    const record = ledger.find(r => r.status === 'active');
+    record.status = 'closed';
+    record.endDate = getTodayDate();
+    record.closedAt = new Date().toISOString();
+    saveLedger(ledger);
+    updateBudgetDashboard();
+    alert('Budget cycle closed successfully for ' + currentCluster.name + '.');
+}
+
+// Update all budget display elements on the dashboard
+function updateBudgetDashboard() {
+    const active = getActiveCycle();
+    const cycleBudgetEl = document.getElementById('cycle-budget-total');
+    const cycleExpenseEl = document.getElementById('cycle-expense');
+    const currentBudgetEl = document.getElementById('current-budget');
+    const budgetStatusEl = document.getElementById('budget-status-text');
+
+    if (active) {
+        if (cycleBudgetEl) cycleBudgetEl.textContent = formatBudgetCurrency(active.budget);
+        if (cycleExpenseEl) cycleExpenseEl.textContent = formatBudgetCurrency(active.expense);
+        if (currentBudgetEl) {
+            currentBudgetEl.textContent = formatBudgetCurrency(active.remaining);
+            currentBudgetEl.classList.remove('negative', 'warning');
+            if (active.remaining < 0) {
+                currentBudgetEl.classList.add('negative');
+            } else if (active.remaining < active.budget * 0.1) {
+                currentBudgetEl.classList.add('warning');
+            }
+        }
+        if (budgetStatusEl) budgetStatusEl.textContent = 'Active since ' + formatLedgerDate(active.startDate);
+    } else {
+        if (cycleBudgetEl) cycleBudgetEl.textContent = '---';
+        if (cycleExpenseEl) cycleExpenseEl.textContent = '₱0';
+        if (currentBudgetEl) {
+            currentBudgetEl.textContent = 'Not Set';
+            currentBudgetEl.classList.remove('negative', 'warning');
+        }
+        if (budgetStatusEl) budgetStatusEl.textContent = 'No Active Cycle';
+    }
+}
+
+// Load budget on page load
+function loadSavedBudget() {
+    updateBudgetDashboard();
+    // Update modal subtitle
+    const budgetModalSubtitle = document.getElementById('budget-modal-subtitle');
+    if (budgetModalSubtitle && currentCluster.name) {
+        budgetModalSubtitle.textContent = 'Set budget for ' + currentCluster.name;
+    }
+}
+
+// Display budget history in the history modal
+function displayBudgetHistory() {
+    const container = document.getElementById('budget-history-container');
+    if (!container) return;
+
+    const ledger = loadLedger();
+    if (ledger.length === 0) {
+        container.innerHTML = '<div class="loading-message">No budget history for this cluster</div>';
+        return;
+    }
+
+    // Sort newest first
+    const sorted = [...ledger].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    container.innerHTML = sorted.map(record => {
+        const isActive = record.status === 'active';
+        const remainingClass = record.remaining < 0 ? ' negative' : '';
+        return `
+            <div class="budget-history-row">
+                <span>${formatLedgerDate(record.startDate)}</span>
+                <span>${isActive ? '<em>Ongoing</em>' : formatLedgerDate(record.endDate)}</span>
+                <span class="amount-cell">${formatBudgetCurrency(record.budget)}</span>
+                <span class="amount-cell">${formatBudgetCurrency(record.expense)}</span>
+                <span class="amount-cell${remainingClass}">${formatBudgetCurrency(record.remaining)}</span>
+                <span><span class="status-badge ${record.status}">${isActive ? 'Active' : 'Closed'}</span></span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Setup budget history modal event listeners
+function setupBudgetHistory() {
+    const historyBtn = document.getElementById('budget-history-btn');
+    const historyModal = document.getElementById('budget-history-modal');
+    const historyClose = document.getElementById('budget-history-modal-close');
+    const historySubtitle = document.getElementById('budget-history-subtitle');
+
+    if (historySubtitle && currentCluster.name) {
+        historySubtitle.textContent = 'Budget cycle history for ' + currentCluster.name;
+    }
+
+    if (historyBtn && historyModal) {
+        historyBtn.addEventListener('click', () => {
+            displayBudgetHistory();
+            historyModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    if (historyClose) {
+        historyClose.addEventListener('click', () => {
+            historyModal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+
+    if (historyModal) {
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) {
+                historyModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
 }
 
 // Get budget elements
@@ -1605,62 +1835,16 @@ const budgetModal = document.getElementById('budget-modal');
 const budgetModalClose = document.getElementById('budget-modal-close');
 const budgetForm = document.getElementById('budget-form');
 const budgetAmountInput = document.getElementById('budget-amount');
-const currentBudgetDisplay = document.getElementById('current-budget');
-const budgetClusterLabel = document.getElementById('budget-cluster-label');
-const budgetModalSubtitle = document.getElementById('budget-modal-subtitle');
-
-// Load saved budget on page load
-function loadSavedBudget() {
-    const storageKey = getBudgetStorageKey();
-    const savedBudget = localStorage.getItem(storageKey);
-    if (savedBudget) {
-        const budgetData = JSON.parse(savedBudget);
-        updateBudgetDisplay(budgetData.amount);
-    }
-    // Update cluster label
-    if (budgetClusterLabel && currentCluster.name) {
-        budgetClusterLabel.textContent = currentCluster.name;
-    }
-    // Update modal subtitle
-    if (budgetModalSubtitle && currentCluster.name) {
-        budgetModalSubtitle.textContent = 'Set budget for ' + currentCluster.name;
-    }
-}
-
-// Update budget display
-function updateBudgetDisplay(amount) {
-    if (currentBudgetDisplay) {
-        if (amount && amount > 0) {
-            currentBudgetDisplay.textContent = '₱' + parseFloat(amount).toLocaleString('en-PH');
-        } else {
-            currentBudgetDisplay.textContent = 'Not Set';
-        }
-    }
-}
-
-// Save budget to localStorage (isolated per cluster)
-function saveBudget(amount) {
-    const storageKey = getBudgetStorageKey();
-    const budgetData = {
-        amount: amount,
-        updatedAt: new Date().toISOString(),
-        cluster: currentClusterKey
-    };
-    localStorage.setItem(storageKey, JSON.stringify(budgetData));
-    updateBudgetDisplay(amount);
-}
 
 // Open budget modal
 if (setBudgetBtn) {
     setBudgetBtn.addEventListener('click', () => {
-        // Pre-fill with current budget if exists
-        const storageKey = getBudgetStorageKey();
-        const savedBudget = localStorage.getItem(storageKey);
-        if (savedBudget) {
-            const budgetData = JSON.parse(savedBudget);
-            if (budgetAmountInput) {
-                budgetAmountInput.value = budgetData.amount;
-            }
+        // Pre-fill with active cycle budget if exists
+        const active = getActiveCycle();
+        if (active && budgetAmountInput) {
+            budgetAmountInput.value = active.budget;
+        } else if (budgetAmountInput) {
+            budgetAmountInput.value = '';
         }
         budgetModal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -1691,8 +1875,10 @@ if (budgetForm) {
         e.preventDefault();
         const amount = parseFloat(budgetAmountInput.value);
         if (amount && amount > 0) {
-            saveBudget(amount);
-            alert('Budget saved successfully for ' + currentCluster.name + '!');
+            const started = startBudgetCycle(amount);
+            if (started) {
+                alert('Budget cycle started for ' + currentCluster.name + '!');
+            }
             budgetModal.classList.remove('active');
             document.body.style.overflow = '';
         } else {
@@ -1701,10 +1887,10 @@ if (budgetForm) {
     });
 }
 
-// Replenish button - placeholder (no function yet)
+// Replenish button — close active budget cycle
 if (replenishBtn) {
     replenishBtn.addEventListener('click', () => {
-        alert('Replenish feature coming soon!');
+        closeBudgetCycle();
     });
 }
 
@@ -1725,6 +1911,7 @@ function initClusterPage() {
         drawDonutChart();
         fetchSheetData();
         loadSavedBudget();
+        setupBudgetHistory();
     });
 
     // Setup event handlers

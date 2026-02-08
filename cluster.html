@@ -127,15 +127,37 @@
                 <div class="card-diamond top-left"></div>
                 <div class="card-diamond bottom-right"></div>
             </div>
-            <div class="stat-card budget-card">
-                <div class="stat-label">Current Budget</div>
-                <div class="stat-value" id="current-budget">Not Set</div>
-                <div class="stat-change neutral" id="budget-status">
-                    <span class="change-icon">📋</span>
-                    <span id="budget-cluster-label">This Cluster</span>
+        </div>
+
+        <!-- Budget Cycle Status -->
+        <div class="budget-status-bar" id="budget-status-bar">
+            <div class="budget-stat-card">
+                <div class="budget-stat-icon">💰</div>
+                <div class="budget-stat-info">
+                    <div class="budget-stat-label">Cycle Budget</div>
+                    <div class="budget-stat-value" id="cycle-budget-total">---</div>
                 </div>
-                <div class="card-diamond top-left"></div>
-                <div class="card-diamond bottom-right"></div>
+            </div>
+            <div class="budget-stat-card">
+                <div class="budget-stat-icon">📉</div>
+                <div class="budget-stat-info">
+                    <div class="budget-stat-label">Cycle Expense</div>
+                    <div class="budget-stat-value" id="cycle-expense">₱0</div>
+                </div>
+            </div>
+            <div class="budget-stat-card remaining-card">
+                <div class="budget-stat-icon">💵</div>
+                <div class="budget-stat-info">
+                    <div class="budget-stat-label">Remaining</div>
+                    <div class="budget-stat-value" id="current-budget">Not Set</div>
+                </div>
+            </div>
+            <div class="budget-stat-card">
+                <div class="budget-stat-icon">📋</div>
+                <div class="budget-stat-info">
+                    <div class="budget-stat-label">Cycle Status</div>
+                    <div class="budget-stat-value" id="budget-status-text">No Active Cycle</div>
+                </div>
             </div>
         </div>
 
@@ -171,6 +193,10 @@
                     <button class="replenish-btn" id="replenish-btn">
                         <span class="replenish-icon">🔄</span>
                         Replenish
+                    </button>
+                    <button class="history-btn" id="budget-history-btn">
+                        <span class="history-icon">📊</span>
+                        Budget History
                     </button>
                     <button class="add-pcf-btn" id="add-pcf-btn">
                         <span class="pcf-icon">➕</span>
@@ -388,6 +414,32 @@
                     </div>
                     <div class="transactions-modal-body" id="all-transactions-container">
                         <div class="loading-message">Loading all transactions...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget History Modal -->
+    <div class="modal-overlay" id="budget-history-modal">
+        <div class="modal-content transactions-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Budget History</h2>
+                <p class="modal-subtitle" id="budget-history-subtitle">Budget cycle history</p>
+                <button class="modal-close" id="budget-history-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transactions-modal-table">
+                    <div class="budget-history-header">
+                        <span>Date Started</span>
+                        <span>Date Ended</span>
+                        <span>Budget</span>
+                        <span>Expense</span>
+                        <span>Remaining</span>
+                        <span>Status</span>
+                    </div>
+                    <div class="budget-history-body" id="budget-history-container">
+                        <div class="loading-message">No budget history available</div>
                     </div>
                 </div>
             </div>
