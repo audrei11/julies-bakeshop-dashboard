@@ -1942,6 +1942,7 @@ function displayAllTransactions() {
 
 // ==================== BUDGET MANAGEMENT ====================
 const BUDGET_STORAGE_KEY = 'julies_budget_all';
+const CYCLE_STORAGE_KEY = 'julies_cycle_all';
 
 // Get budget elements
 const setBudgetBtn = document.getElementById('set-budget-btn');

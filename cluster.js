@@ -1590,7 +1590,12 @@ suggestionBtns.forEach(btn => {
 
 // Get budget storage key for current cluster
 function getBudgetStorageKey() {
-    return 'julies_budget_' + currentCluster.key;
+    return 'julies_budget_' + currentClusterKey;
+}
+
+// Get cycle storage key for current cluster
+function getCycleStorageKey() {
+    return 'julies_cycle_' + currentClusterKey;
 }
 
 // Get budget elements
@@ -1633,13 +1638,13 @@ function updateBudgetDisplay(amount) {
     }
 }
 
-// Save budget to localStorage
+// Save budget to localStorage (isolated per cluster)
 function saveBudget(amount) {
     const storageKey = getBudgetStorageKey();
     const budgetData = {
         amount: amount,
         updatedAt: new Date().toISOString(),
-        cluster: currentCluster.key
+        cluster: currentClusterKey
     };
     localStorage.setItem(storageKey, JSON.stringify(budgetData));
     updateBudgetDisplay(amount);
