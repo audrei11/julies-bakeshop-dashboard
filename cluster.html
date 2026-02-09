@@ -486,7 +486,7 @@
         </div>
     </div>
 
-    <script src="auth.js?v=4"></script>
+    <script src="auth.js?v=5"></script>
     <script>
         // Get cluster from URL or session
         var urlParams = new URLSearchParams(window.location.search);
@@ -498,6 +498,8 @@
             if (session.role === 'admin') {
                 // Admin without cluster param - redirect to main dashboard
                 window.location.href = 'index.html';
+                // Stop further execution to prevent login redirect overwrite
+                clusterParam = '__redirecting__';
             } else {
                 // Cluster user - use their assigned cluster
                 clusterParam = session.cluster;
@@ -509,12 +511,20 @@
         // Still no cluster and no session = go to login
         if (!clusterParam) {
             window.location.href = 'login.html';
-        } else {
+        } else if (clusterParam !== '__redirecting__') {
             // Check access
             if (JuliesAuth.protectClusterPage(clusterParam)) {
                 // Access OK - setup UI
                 JuliesAuth.updateGreeting();
                 JuliesAuth.hideClusterNav();
+
+                // Ensure admin nav stays visible after full DOM load
+                document.addEventListener('DOMContentLoaded', function() {
+                    JuliesAuth.ensureAdminNav();
+                });
+                window.addEventListener('load', function() {
+                    JuliesAuth.ensureAdminNav();
+                });
             }
             // If false, redirect already happened
         }

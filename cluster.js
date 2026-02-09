@@ -1919,6 +1919,11 @@ function initClusterPage() {
     setupBackButton();
     setupLogoutButton();
 
+    // Fallback: force admin nav visible after all setup
+    if (window.JuliesAuth) {
+        JuliesAuth.ensureAdminNav();
+    }
+
     // Update time every second
     setInterval(updateDateTime, 1000);
     updateDateTime();

@@ -39,12 +39,15 @@ function saveSession(email, role, cluster, name) {
         name: name
     };
     localStorage.setItem('julies_session', JSON.stringify(session));
+    // Store role directly for reliable access
+    localStorage.setItem('role', role);
     return session;
 }
 
 // Clear session
 function clearSession() {
     localStorage.removeItem('julies_session');
+    localStorage.removeItem('role');
 }
 
 // Login function - returns user data or null
@@ -146,15 +149,40 @@ function updateGreeting() {
     }
 }
 
-// Hide cluster navigation for non-admin
+// Hide cluster navigation for non-admin, force-show for admin
 function hideClusterNav() {
-    var session = getSession();
-    if (session && session.role !== 'admin') {
-        var nav = document.querySelector('.cluster-nav');
-        if (nav) nav.style.display = 'none';
+    var role = localStorage.getItem('role');
+    if (!role) {
+        var session = getSession();
+        role = session ? session.role : null;
+    }
 
-        var backBtn = document.getElementById('back-btn');
+    var nav = document.querySelector('.cluster-nav');
+    var backBtn = document.getElementById('back-btn');
+
+    if (role === 'admin') {
+        // Admin: always force visibility
+        if (nav) nav.style.display = 'flex';
+        if (backBtn) backBtn.style.display = 'flex';
+    } else {
+        // Non-admin: hide cluster nav and back button
+        if (nav) nav.style.display = 'none';
         if (backBtn) backBtn.style.display = 'none';
+    }
+}
+
+// Fallback: ensure admin nav is always visible after DOM is ready
+function ensureAdminNav() {
+    var role = localStorage.getItem('role');
+    if (!role) {
+        var session = getSession();
+        role = session ? session.role : null;
+    }
+    if (role === 'admin') {
+        var nav = document.querySelector('.cluster-nav');
+        var backBtn = document.getElementById('back-btn');
+        if (nav) nav.style.display = 'flex';
+        if (backBtn) backBtn.style.display = 'flex';
     }
 }
 
@@ -172,5 +200,6 @@ window.JuliesAuth = {
     protectClusterPage: protectClusterPage,
     protectDashboard: protectDashboard,
     updateGreeting: updateGreeting,
-    hideClusterNav: hideClusterNav
+    hideClusterNav: hideClusterNav,
+    ensureAdminNav: ensureAdminNav
 };
